@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { gsap } from '@/utils/gsapConfig';
+import { gsap, ScrollTrigger } from '@/utils/gsapConfig';
 
 const services = [
     {
@@ -38,33 +38,55 @@ const services = [
 
 export default function ServicesSection() {
     const sectionRef = useRef<HTMLElement>(null);
+    const titleRef = useRef<HTMLDivElement>(null);
+    const cardsRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const ctx = gsap.context(() => {
-            gsap.from('.section-title', {
-                opacity: 0,
-                y: 50,
-                duration: 1,
-                scrollTrigger: {
-                    trigger: sectionRef.current,
-                    start: 'top 70%',
-                },
-            });
+        const timer = setTimeout(() => {
+            if (!sectionRef.current || !titleRef.current || !cardsRef.current) return;
 
-            gsap.from('.service-card', {
-                opacity: 0,
-                y: 60,
-                stagger: 0.15,
-                duration: 0.8,
-                ease: 'power3.out',
-                scrollTrigger: {
-                    trigger: sectionRef.current,
-                    start: 'top 60%',
-                },
-            });
-        });
+            const ctx = gsap.context(() => {
+                // Title animation
+                gsap.fromTo(titleRef.current,
+                    { opacity: 0, y: 50 },
+                    {
+                        opacity: 1,
+                        y: 0,
+                        duration: 1,
+                        ease: 'power3.out',
+                        scrollTrigger: {
+                            trigger: sectionRef.current,
+                            start: 'top 80%',
+                            toggleActions: 'play none none none',
+                        },
+                    }
+                );
 
-        return () => ctx.revert();
+                // Cards stagger animation - using fromTo for visibility
+                const cards = cardsRef.current?.querySelectorAll('.service-card');
+                if (cards && cards.length > 0) {
+                    gsap.fromTo(cards,
+                        { opacity: 0, y: 60 },
+                        {
+                            opacity: 1,
+                            y: 0,
+                            stagger: 0.15,
+                            duration: 0.8,
+                            ease: 'power3.out',
+                            scrollTrigger: {
+                                trigger: cardsRef.current,
+                                start: 'top 85%',
+                                toggleActions: 'play none none none',
+                            },
+                        }
+                    );
+                }
+            }, sectionRef);
+
+            return () => ctx.revert();
+        }, 200);
+
+        return () => clearTimeout(timer);
     }, []);
 
     return (
@@ -74,7 +96,7 @@ export default function ServicesSection() {
             className="py-20 px-4 relative z-10"
         >
             <div className="container mx-auto max-w-7xl">
-                <div className="text-center mb-16 section-title">
+                <div ref={titleRef} className="text-center mb-16">
                     <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 gradient-text drop-shadow-sm">
                         Our Services
                     </h2>
@@ -83,11 +105,12 @@ export default function ServicesSection() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                <div ref={cardsRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                     {services.map((service, index) => (
                         <div
                             key={index}
                             className="service-card glass p-8 rounded-3xl hover:scale-105 transition-all duration-300 cursor-pointer group hover:bg-white/20"
+                            style={{ opacity: 1 }} // Ensure visibility
                         >
                             <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300 drop-shadow-md">
                                 {service.icon}

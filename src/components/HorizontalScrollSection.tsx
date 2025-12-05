@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useLayoutEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { gsap, ScrollTrigger } from '@/utils/gsapConfig';
 import Image from 'next/image';
 
@@ -34,39 +34,62 @@ const features = [
 export default function HorizontalScrollSection() {
     const sectionRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLDivElement>(null);
+    const panelsRef = useRef<HTMLDivElement>(null);
 
-    useLayoutEffect(() => {
-        const ctx = gsap.context(() => {
-            const totalWidth = features.length * 100;
+    useEffect(() => {
+        // Give time for DOM to be ready
+        const timer = setTimeout(() => {
+            if (!triggerRef.current || !panelsRef.current) return;
 
-            gsap.to(sectionRef.current, {
-                x: `-${(features.length - 1) * 100}vw`,
-                ease: 'none',
-                scrollTrigger: {
-                    trigger: triggerRef.current,
-                    start: 'top top',
-                    end: `+=${2000}`, // Adjust scroll length
-                    scrub: 1,
-                    pin: true,
-                    // snap: 1 / (features.length - 1), // Optional: snap to slides
-                },
-            });
-        }, triggerRef);
+            const panels = panelsRef.current;
+            const totalScroll = panels.scrollWidth - window.innerWidth;
 
-        return () => ctx.revert();
+            const ctx = gsap.context(() => {
+                gsap.to(panels, {
+                    x: -totalScroll,
+                    ease: 'none',
+                    scrollTrigger: {
+                        trigger: triggerRef.current,
+                        start: 'top top',
+                        end: () => `+=${totalScroll}`,
+                        scrub: 1.5,
+                        pin: true,
+                        pinSpacing: true,
+                        anticipatePin: 1,
+                        invalidateOnRefresh: true,
+                        onEnter: () => console.log('Horizontal section entered'),
+                    },
+                });
+            }, triggerRef);
+
+            return () => ctx.revert();
+        }, 200);
+
+        return () => clearTimeout(timer);
     }, []);
 
     return (
-        <section className="relative overflow-hidden" ref={triggerRef}>
+        <section
+            ref={triggerRef}
+            className="relative overflow-hidden"
+            style={{ zIndex: 10 }}
+        >
+            {/* Section Title */}
+            <div className="absolute top-8 left-0 right-0 z-20 text-center pointer-events-none">
+                <h2 className="text-3xl sm:text-4xl font-bold gradient-text drop-shadow-lg">Our Expertise</h2>
+                <p className="text-white/70 mt-2 text-sm">Scroll to explore →</p>
+            </div>
+
             {/* Horizontal Container */}
             <div
-                ref={sectionRef}
-                className="flex h-screen w-[400vw]" // Width = 100vw * number of slides
+                ref={panelsRef}
+                className="flex h-screen"
+                style={{ width: `${features.length * 100}vw` }}
             >
                 {features.map((feature, index) => (
                     <div
                         key={feature.id}
-                        className="w-screen h-screen flex items-center justify-center relative px-4 sm:px-10"
+                        className="w-screen h-screen flex items-center justify-center px-4 sm:px-10 flex-shrink-0"
                     >
                         {/* Glass Card */}
                         <div className="glass-dark p-8 md:p-12 rounded-2xl max-w-4xl w-full grid md:grid-cols-2 gap-8 items-center transform transition-transform hover:scale-[1.02] duration-500">
@@ -111,7 +134,7 @@ export default function HorizontalScrollSection() {
             {/* Scroll Indicator */}
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                 {features.map((_, i) => (
-                    <div key={i} className="w-2 h-2 rounded-full bg-white/20"></div>
+                    <div key={i} className="w-3 h-3 rounded-full bg-white/30 border border-white/50"></div>
                 ))}
             </div>
         </section>
