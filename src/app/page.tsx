@@ -5,13 +5,13 @@ import GallerySection from '@/components/GallerySection';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
-import VideoScroller from '@/components/VideoScroller';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import HorizontalScrollSection from "@/components/HorizontalScrollSection";
 
 export default function Home() {
   return (
     <main className="relative min-h-screen">
-      <VideoScroller />
+      <AnimatedBackground />
       <Navbar />
       <HeroSection />
       <HorizontalScrollSection />
