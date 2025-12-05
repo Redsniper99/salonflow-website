@@ -5,7 +5,7 @@ import GallerySection from '@/components/GallerySection';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import MapContactSection from '@/components/MapContactSection';
 import Footer from '@/components/Footer';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import VideoScroller from '@/components/VideoScroller';
 import HorizontalScrollSection from "@/components/HorizontalScrollSection";
 import ScissorCutDivider from '@/components/ScissorCutDivider';
 import AppointmentSection from '@/components/AppointmentSection';
@@ -13,7 +13,9 @@ import AppointmentSection from '@/components/AppointmentSection';
 export default function Home() {
   return (
     <main className="relative min-h-screen">
-      <AnimatedBackground />
+      {/* Full-page scroll-controlled video background */}
+      <VideoScroller />
+
       <Navbar />
       <HeroSection />
 

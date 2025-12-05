@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { gsap } from '@/utils/gsapConfig';
+import { useEffect, useRef, useState } from 'react';
 
 const testimonials = [
     {
@@ -32,33 +31,25 @@ const testimonials = [
 
 export default function TestimonialsSection() {
     const sectionRef = useRef<HTMLElement>(null);
+    const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        const ctx = gsap.context(() => {
-            gsap.from('.testimonials-title', {
-                opacity: 0,
-                y: 50,
-                duration: 1,
-                scrollTrigger: {
-                    trigger: sectionRef.current,
-                    start: 'top 70%',
-                },
-            });
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        setIsVisible(true);
+                    }
+                });
+            },
+            { threshold: 0.2 }
+        );
 
-            gsap.from('.testimonial-card', {
-                opacity: 0,
-                x: (index) => (index % 2 === 0 ? -50 : 50),
-                stagger: 0.2,
-                duration: 0.8,
-                ease: 'power3.out',
-                scrollTrigger: {
-                    trigger: sectionRef.current,
-                    start: 'top 60%',
-                },
-            });
-        });
+        if (sectionRef.current) {
+            observer.observe(sectionRef.current);
+        }
 
-        return () => ctx.revert();
+        return () => observer.disconnect();
     }, []);
 
     return (
@@ -68,12 +59,13 @@ export default function TestimonialsSection() {
             className="py-20 px-4 relative z-10"
         >
             <div className="container mx-auto max-w-7xl">
-                <div className="text-center mb-16 testimonials-title">
+                <div className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                    }`}>
                     <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 gradient-text drop-shadow-sm">
                         What Our Clients Say
                     </h2>
-                    <p className="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto drop-shadow-md">
-                        Don't just take our word for it - hear from our satisfied clients
+                    <p className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto">
+                        Don&apos;t just take our word for it - hear from our satisfied clients
                     </p>
                 </div>
 
@@ -81,32 +73,41 @@ export default function TestimonialsSection() {
                     {testimonials.map((testimonial, index) => (
                         <div
                             key={index}
-                            className="testimonial-card p-8 rounded-2xl border-2 border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-primary-400/50 transition-all duration-300"
+                            className={`p-6 sm:p-8 rounded-2xl border-2 border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-primary-400/50 transition-all duration-500 ${isVisible
+                                    ? 'opacity-100 translate-x-0'
+                                    : index % 2 === 0 ? 'opacity-0 -translate-x-10' : 'opacity-0 translate-x-10'
+                                }`}
+                            style={{ transitionDelay: `${index * 150}ms` }}
                         >
-                            <div className="flex items-center mb-4">
+                            {/* Stars */}
+                            <div className="flex items-center mb-4 gap-1">
                                 {[...Array(testimonial.rating)].map((_, i) => (
                                     <svg
                                         key={i}
-                                        className="w-5 h-5 text-salon-accent fill-current"
+                                        className="w-5 h-5 text-yellow-400 fill-current"
                                         viewBox="0 0 20 20"
                                     >
                                         <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                                     </svg>
                                 ))}
                             </div>
-                            <p className="text-white text-lg mb-6 leading-relaxed italic">
-                                "{testimonial.text}"
+
+                            {/* Quote */}
+                            <p className="text-white text-base sm:text-lg mb-6 leading-relaxed italic">
+                                &ldquo;{testimonial.text}&rdquo;
                             </p>
+
+                            {/* Author */}
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h4 className="text-white font-bold text-lg">
+                                    <h4 className="text-white font-bold text-base sm:text-lg">
                                         {testimonial.name}
                                     </h4>
-                                    <p className="text-salon-accent-light text-sm">
+                                    <p className="text-primary-400 text-sm">
                                         {testimonial.service}
                                     </p>
                                 </div>
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-salon-green to-salon-green-light flex items-center justify-center text-white font-bold text-xl">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-lg">
                                     {testimonial.name.charAt(0)}
                                 </div>
                             </div>

@@ -22,11 +22,16 @@ export default function ScissorCutDivider({ direction = 'right' }: ScissorCutDiv
                         setIsVisible(true);
                         setHasAnimated(true);
 
-                        // Play scissor sound
+                        // Play cutting sound
                         try {
-                            const audio = new Audio('/sounds/scissor-cut.mp3');
-                            audio.volume = 0.3;
+                            const audio = new Audio('/sounds/cutting.mp3');
+                            audio.volume = 0.4;
+                            audio.currentTime = 0.5; // Start a bit into the sound for immediate effect
                             audio.play().catch(() => { });
+                            // Stop after 1.5 seconds to use just a piece
+                            setTimeout(() => {
+                                audio.pause();
+                            }, 1500);
                         } catch (e) {
                             // Ignore audio errors
                         }
@@ -60,8 +65,8 @@ export default function ScissorCutDivider({ direction = 'right' }: ScissorCutDiv
             {/* Animated scissor using CSS */}
             <div
                 className={`absolute top-1/2 -translate-y-1/2 z-20 transition-all duration-1000 ease-in-out ${isVisible
-                        ? (direction === 'right' ? 'translate-x-[100vw]' : '-translate-x-full')
-                        : (direction === 'right' ? '-translate-x-full' : 'translate-x-[100vw]')
+                    ? (direction === 'right' ? 'translate-x-[100vw]' : '-translate-x-full')
+                    : (direction === 'right' ? '-translate-x-full' : 'translate-x-[100vw]')
                     }`}
                 style={{
                     left: 0,
