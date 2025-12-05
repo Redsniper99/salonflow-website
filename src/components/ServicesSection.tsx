@@ -109,8 +109,8 @@ export default function ServicesSection() {
                     {services.map((service, index) => (
                         <div
                             key={index}
-                            className="service-card glass p-8 rounded-3xl hover:scale-105 transition-all duration-300 cursor-pointer group hover:bg-white/20"
-                            style={{ opacity: 1 }} // Ensure visibility
+                            className="service-card p-8 rounded-2xl border-2 border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-primary-400/50 transition-all duration-300 cursor-pointer group"
+                            style={{ opacity: 1 }}
                         >
                             <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300 drop-shadow-md">
                                 {service.icon}

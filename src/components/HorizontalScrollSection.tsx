@@ -92,7 +92,7 @@ export default function HorizontalScrollSection() {
                         className="w-screen h-screen flex items-center justify-center px-4 sm:px-10 flex-shrink-0"
                     >
                         {/* Glass Card */}
-                        <div className="glass-dark p-8 md:p-12 rounded-2xl max-w-4xl w-full grid md:grid-cols-2 gap-8 items-center transform transition-transform hover:scale-[1.02] duration-500">
+                        <div className="p-8 md:p-12 rounded-2xl max-w-4xl w-full grid md:grid-cols-2 gap-8 items-center border-2 border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-primary-400/50 transition-all duration-500">
 
                             {/* Text Content */}
                             <div className="order-2 md:order-1 space-y-6">

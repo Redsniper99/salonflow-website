@@ -3,7 +3,7 @@ import HeroSection from '@/components/HeroSection';
 import ServicesSection from '@/components/ServicesSection';
 import GallerySection from '@/components/GallerySection';
 import TestimonialsSection from '@/components/TestimonialsSection';
-import ContactSection from '@/components/ContactSection';
+import MapContactSection from '@/components/MapContactSection';
 import Footer from '@/components/Footer';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import HorizontalScrollSection from "@/components/HorizontalScrollSection";
@@ -42,9 +42,10 @@ export default function Home() {
 
       <ScissorCutDivider direction="left" />
 
-      <ContactSection />
+      {/* Map & Contact Section */}
+      <MapContactSection />
+
       <Footer />
     </main>
   );
 }
-

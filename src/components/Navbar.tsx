@@ -1,21 +1,49 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { gsap } from '@/utils/gsapConfig';
 import Image from 'next/image';
 
 export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isVisible, setIsVisible] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastScrollY = useRef(0);
 
     useEffect(() => {
         const handleScroll = () => {
             const scrollPosition = window.scrollY;
+            const isScrollingDown = scrollPosition > lastScrollY.current;
+
+            // Update scroll state
             setIsScrolled(scrollPosition > 20);
+
+            // Show navbar when scrolling
+            setIsVisible(true);
+
+            // Clear existing timeout
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
+
+            // Hide navbar after scroll stops (only if scrolled down past hero)
+            if (scrollPosition > 100) {
+                scrollTimeoutRef.current = setTimeout(() => {
+                    setIsVisible(false);
+                }, 2000); // Hide after 2 seconds of no scrolling
+            }
+
+            lastScrollY.current = scrollPosition;
         };
 
         window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
+        };
     }, []);
 
     useEffect(() => {
@@ -40,10 +68,11 @@ export default function Navbar() {
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b ${isScrolled
-                ? 'glass-dark py-3 border-white/10'
-                : 'bg-transparent py-6 border-transparent'
-                }`}
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
+                ? 'bg-black/60 backdrop-blur-xl border-b border-white/10 py-3'
+                : 'bg-transparent py-6'
+                } ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}
+            onMouseEnter={() => setIsVisible(true)}
         >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                 <div className="flex items-center justify-between">
@@ -111,7 +140,7 @@ export default function Navbar() {
 
                 {/* Mobile Menu */}
                 {isMobileMenuOpen && (
-                    <div className="md:hidden absolute top-full left-0 right-0 glass-dark border-t border-white/10 shadow-2xl backdrop-blur-xl">
+                    <div className="md:hidden absolute top-full left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-white/10 shadow-2xl">
                         <div className="flex flex-col py-6 px-6 space-y-2">
                             {navLinks.map((link) => (
                                 <a
