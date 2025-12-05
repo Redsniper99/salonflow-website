@@ -128,6 +128,51 @@ body {
   }
 }
 
+/* Preloader animations */
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+
+  100% {
+    transform: translateX(200%) rotate(45deg);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.3;
+  }
+
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 0.6;
+  }
+}
+
+@keyframes scissor-cut {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(15deg);
+  }
+}
+
+.animate-shine {
+  animation: shine 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
 @keyframes gradient {
   0% {
     background-position: 0% 50%;

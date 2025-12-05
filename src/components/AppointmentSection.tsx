@@ -43,7 +43,7 @@ const timeSlots = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '2:00 PM', '3:
 export default function AppointmentSection() {
     const [currentStep, setCurrentStep] = useState(1);
     const sectionRef = useRef<HTMLElement>(null);
-    const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
+    const [isMounted, setIsMounted] = useState(false);
     const [bookingData, setBookingData] = useState<BookingData>({
         service: '',
         stylist: '',
@@ -56,43 +56,39 @@ export default function AppointmentSection() {
     });
 
     useEffect(() => {
-        if (!sectionRef.current) return;
+        setIsMounted(true);
+    }, []);
 
-        // Kill any existing ScrollTrigger for this element
-        ScrollTrigger.getAll().forEach(st => {
-            if (st.vars.trigger === sectionRef.current) {
-                st.kill();
-            }
-        });
+    useEffect(() => {
+        if (!isMounted || !sectionRef.current) return;
 
         const timer = setTimeout(() => {
-            if (!sectionRef.current) return;
+            const section = sectionRef.current;
+            if (!section) return;
 
-            scrollTriggerRef.current = ScrollTrigger.create({
-                trigger: sectionRef.current,
-                start: 'top top',
-                end: `+=${steps.length * 400}`,
-                pin: true,
-                pinSpacing: true,
-                scrub: 1,
-                anticipatePin: 1,
-                onUpdate: (self) => {
-                    const progress = self.progress;
-                    const stepIndex = Math.floor(progress * steps.length);
-                    const newStep = Math.min(Math.max(stepIndex + 1, 1), steps.length);
-                    setCurrentStep(prev => prev !== newStep ? newStep : prev);
-                },
-            });
-        }, 500);
+            const ctx = gsap.context(() => {
+                ScrollTrigger.create({
+                    trigger: section,
+                    start: 'top top',
+                    end: `+=${steps.length * 400}`,
+                    pin: true,
+                    scrub: 1,
+                    anticipatePin: 1,
+                    invalidateOnRefresh: true,
+                    onUpdate: (self) => {
+                        const progress = self.progress;
+                        const stepIndex = Math.floor(progress * steps.length);
+                        const newStep = Math.min(Math.max(stepIndex + 1, 1), steps.length);
+                        setCurrentStep(prev => prev !== newStep ? newStep : prev);
+                    },
+                });
+            }, section);
 
-        return () => {
-            clearTimeout(timer);
-            if (scrollTriggerRef.current) {
-                scrollTriggerRef.current.kill();
-                scrollTriggerRef.current = null;
-            }
-        };
-    }, []);
+            return () => ctx.revert();
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [isMounted]);
 
     const handleSubmit = () => {
         alert('🎉 Appointment booked successfully!');
@@ -291,9 +287,8 @@ export default function AppointmentSection() {
             ref={sectionRef}
             id="appointment"
             className="h-screen w-full bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950 relative z-10"
-            suppressHydrationWarning
         >
-            <div className="h-full w-full flex flex-col lg:flex-row" suppressHydrationWarning>
+            <div className="h-full w-full flex flex-col lg:flex-row">
                 {/* Left Side - Vertical Stepper (Desktop) */}
                 <div className="hidden lg:flex w-64 xl:w-80 h-full items-center justify-center bg-black/20">
                     <div className="relative flex flex-col justify-center items-center h-[60vh] py-8">
@@ -357,7 +352,7 @@ export default function AppointmentSection() {
                         ))}
                     </div>
                     <p className="text-center text-white/60 text-xs mt-2">
-                        {steps[currentStep - 1].title}
+                        {steps[currentStep - 1].title} - Scroll to navigate
                     </p>
                 </div>
 
@@ -368,7 +363,7 @@ export default function AppointmentSection() {
 
                         {/* Scroll hint */}
                         <div className="mt-4 sm:mt-6 text-center">
-                            <p className="text-white/30 text-xs">Scroll to navigate</p>
+                            <p className="text-white/30 text-xs">Scroll to navigate steps</p>
                             <div className="mt-1 animate-bounce">
                                 <svg className="w-4 h-4 mx-auto text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />

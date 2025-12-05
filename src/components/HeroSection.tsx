@@ -1,69 +1,16 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { gsap, ScrollTrigger } from '@/utils/gsapConfig';
+import { useEffect, useRef, useState } from 'react';
 
 export default function HeroSection() {
-    const videoRef = useRef<HTMLVideoElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const sectionRef = useRef<HTMLElement>(null);
+    const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        const ctx = gsap.context(() => {
-            // Animate hero content on load
-            gsap.from('.hero-title', {
-                opacity: 0,
-                y: 50,
-                duration: 1.2,
-                delay: 0.5,
-                ease: 'power3.out',
-            });
-
-            gsap.from('.hero-subtitle', {
-                opacity: 0,
-                y: 30,
-                duration: 1,
-                delay: 0.8,
-                ease: 'power3.out',
-            });
-
-            gsap.from('.hero-buttons', {
-                opacity: 0,
-                y: 30,
-                duration: 1,
-                delay: 1.1,
-                ease: 'power3.out',
-            });
-
-            // Video scroll effect
-            if (sectionRef.current && videoRef.current) {
-                gsap.to(videoRef.current, {
-                    scale: 1.2,
-                    scrollTrigger: {
-                        trigger: sectionRef.current,
-                        start: 'top top',
-                        end: 'bottom top',
-                        scrub: 1,
-                    },
-                });
-            }
-
-            // Fade out content on scroll
-            if (contentRef.current) {
-                gsap.to(contentRef.current, {
-                    opacity: 0,
-                    y: -100,
-                    scrollTrigger: {
-                        trigger: sectionRef.current,
-                        start: 'top top',
-                        end: '50% top',
-                        scrub: 1,
-                    },
-                });
-            }
-        });
-
-        return () => ctx.revert();
+        // Trigger animations after mount
+        const timer = setTimeout(() => setIsVisible(true), 100);
+        return () => clearTimeout(timer);
     }, []);
 
     return (
@@ -75,33 +22,43 @@ export default function HeroSection() {
             {/* Hero Content */}
             <div
                 ref={contentRef}
-                className="relative z-10 h-full flex items-center justify-center text-center px-4"
+                className="relative z-10 h-full flex items-center justify-center text-center px-4 sm:px-6"
             >
                 <div className="max-w-4xl mx-auto">
-                    <h1 className="hero-title text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
+                    <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-4 sm:mb-6 leading-tight drop-shadow-lg transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                        }`}>
                         Welcome to{' '}
-                        <span className="gradient-text block mt-2">SalonFlow</span>
+                        <span className="gradient-text block mt-1 sm:mt-2">SalonFlow</span>
                     </h1>
-                    <p className="hero-subtitle text-xl sm:text-2xl md:text-3xl text-white/90 mb-8 max-w-2xl mx-auto drop-shadow-md">
+                    <p className={`text-base sm:text-xl md:text-2xl lg:text-3xl text-white/90 mb-6 sm:mb-8 max-w-2xl mx-auto drop-shadow-md transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                        }`}>
                         Where beauty meets elegance. Experience luxury salon services
                         tailored just for you.
                     </p>
-                    <div className="hero-buttons flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        <button className="btn-primary shadow-xl">
+                    <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                        }`}>
+                        <a
+                            href="#appointment"
+                            className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-primary-400 to-primary-600 text-white rounded-full uppercase tracking-wider text-sm font-semibold shadow-xl hover:shadow-[0_0_30px_rgba(116,150,116,0.5)] hover:scale-105 transition-all duration-300 text-center"
+                        >
                             Book Appointment
-                        </button>
-                        <button className="px-8 py-3 border-2 border-white text-white hover:bg-white hover:text-salon-green-dark backdrop-blur-sm transition-all duration-300 rounded-full uppercase tracking-wider text-sm font-semibold">
+                        </a>
+                        <a
+                            href="#services"
+                            className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 border-2 border-white/80 text-white hover:bg-white hover:text-primary-700 backdrop-blur-sm transition-all duration-300 rounded-full uppercase tracking-wider text-sm font-semibold text-center"
+                        >
                             View Services
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
 
             {/* Scroll Indicator */}
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
-                <div className="animate-bounce">
+            <div className="absolute bottom-6 sm:bottom-8 left-1/2 transform -translate-x-1/2 z-10">
+                <div className={`animate-bounce transition-opacity duration-1000 delay-700 ${isVisible ? 'opacity-100' : 'opacity-0'
+                    }`}>
                     <svg
-                        className="w-6 h-6 text-white drop-shadow-md"
+                        className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-md"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"

@@ -131,9 +131,9 @@ export default function GallerySection() {
                                 />
                             </div>
                             {/* Hover overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end p-4">
-                                <span className="text-white font-semibold text-lg mb-2">{image.alt}</span>
-                                <button className="px-4 py-2 bg-salon-accent text-white rounded-full text-sm font-medium hover:bg-salon-green transition-colors">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end p-3 sm:p-4">
+                                <span className="text-white font-semibold text-sm sm:text-lg mb-1 sm:mb-2">{image.alt}</span>
+                                <button className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary-500 text-white rounded-full text-xs sm:text-sm font-medium hover:bg-primary-400 transition-colors">
                                     View Full
                                 </button>
                             </div>

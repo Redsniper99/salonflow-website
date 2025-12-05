@@ -1,3 +1,7 @@
+'use client';
+
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import ServicesSection from '@/components/ServicesSection';
@@ -9,45 +13,54 @@ import VideoScroller from '@/components/VideoScroller';
 import HorizontalScrollSection from "@/components/HorizontalScrollSection";
 import ScissorCutDivider from '@/components/ScissorCutDivider';
 import AppointmentSection from '@/components/AppointmentSection';
+import Preloader from '@/components/Preloader';
 
 export default function Home() {
+  const [isLoading, setIsLoading] = useState(true);
+
   return (
-    <main className="relative min-h-screen">
-      {/* Full-page scroll-controlled video background */}
-      <VideoScroller />
+    <>
+      {/* Preloader */}
+      {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
 
-      <Navbar />
-      <HeroSection />
+      {/* Main Content */}
+      <main className={`relative min-h-screen transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+        {/* Full-page scroll-controlled video background */}
+        <VideoScroller />
 
-      {/* Scissor cut transition */}
-      <ScissorCutDivider direction="right" />
+        <Navbar />
+        <HeroSection />
 
-      <HorizontalScrollSection />
+        {/* Scissor cut transition */}
+        <ScissorCutDivider direction="right" />
 
-      {/* Scissor cut transition */}
-      <ScissorCutDivider direction="left" />
+        <HorizontalScrollSection />
 
-      <ServicesSection />
+        {/* Scissor cut transition */}
+        <ScissorCutDivider direction="left" />
 
-      <ScissorCutDivider direction="right" />
+        <ServicesSection />
 
-      <GallerySection />
+        <ScissorCutDivider direction="right" />
 
-      <ScissorCutDivider direction="left" />
+        <GallerySection />
 
-      <TestimonialsSection />
+        <ScissorCutDivider direction="left" />
 
-      <ScissorCutDivider direction="right" />
+        <TestimonialsSection />
 
-      {/* Modern Appointment Booking */}
-      <AppointmentSection />
+        <ScissorCutDivider direction="right" />
 
-      <ScissorCutDivider direction="left" />
+        {/* Modern Appointment Booking */}
+        <AppointmentSection />
 
-      {/* Map & Contact Section */}
-      <MapContactSection />
+        <ScissorCutDivider direction="left" />
 
-      <Footer />
-    </main>
+        {/* Map & Contact Section */}
+        <MapContactSection />
+
+        <Footer />
+      </main>
+    </>
   );
 }
