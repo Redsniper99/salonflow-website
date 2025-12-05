@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import ServicesSection from '@/components/ServicesSection';
@@ -17,14 +16,33 @@ import Preloader from '@/components/Preloader';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
+  const [showContent, setShowContent] = useState(false);
+
+  // Delayed content visibility to ensure smooth transition
+  useEffect(() => {
+    if (!isLoading) {
+      // Small delay to ensure video/content is ready
+      const timer = setTimeout(() => {
+        setShowContent(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   return (
     <>
-      {/* Preloader */}
+      {/* Preloader - always mounted but fades out */}
       {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
 
+      {/* Background layer to prevent white flash */}
+      <div className="fixed inset-0 bg-primary-950 -z-20" />
+
       {/* Main Content */}
-      <main className={`relative min-h-screen transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+      <main
+        className={`relative min-h-screen transition-opacity duration-700 ease-out ${showContent ? 'opacity-100' : 'opacity-0'
+          }`}
+        style={{ visibility: isLoading ? 'hidden' : 'visible' }}
+      >
         {/* Full-page scroll-controlled video background */}
         <VideoScroller />
 

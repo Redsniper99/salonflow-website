@@ -125,17 +125,7 @@ export default function VideoScroller() {
             className="fixed inset-0 w-full h-full -z-10 overflow-hidden bg-primary-950"
             suppressHydrationWarning
         >
-            {/* Loading state */}
-            {!isVideoReady && (
-                <div className="absolute inset-0 flex items-center justify-center bg-primary-950">
-                    <div className="text-center">
-                        <div className="w-16 h-16 border-4 border-primary-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-white/60 text-sm">Loading...</p>
-                    </div>
-                </div>
-            )}
-
-            {/* Video Background */}
+            {/* Video Background - always render, just control opacity */}
             <video
                 ref={videoRef}
                 src="/videos/bg.mp4"
@@ -146,9 +136,9 @@ export default function VideoScroller() {
                 suppressHydrationWarning
             />
 
-            {/* Gradient overlays */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70 pointer-events-none"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20 pointer-events-none"></div>
+            {/* Gradient overlays - always visible */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20 pointer-events-none" />
         </div>
     );
 }

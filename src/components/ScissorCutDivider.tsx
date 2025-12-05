@@ -10,6 +10,23 @@ export default function ScissorCutDivider({ direction = 'right' }: ScissorCutDiv
     const [isVisible, setIsVisible] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
     const dividerRef = useRef<HTMLDivElement>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Pre-load audio on component mount
+    useEffect(() => {
+        // Create audio element once and preload it
+        const audio = new Audio('/sounds/scissor-cut.mp3');
+        audio.preload = 'auto';
+        audio.volume = 0.6;
+        audioRef.current = audio;
+
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+        };
+    }, []);
 
     useEffect(() => {
         const divider = dividerRef.current;
@@ -22,18 +39,13 @@ export default function ScissorCutDivider({ direction = 'right' }: ScissorCutDiv
                         setIsVisible(true);
                         setHasAnimated(true);
 
-                        // Play cutting sound
-                        try {
-                            const audio = new Audio('/sounds/cutting.mp3');
-                            audio.volume = 0.4;
-                            audio.currentTime = 0.5; // Start a bit into the sound for immediate effect
-                            audio.play().catch(() => { });
-                            // Stop after 1.5 seconds to use just a piece
-                            setTimeout(() => {
-                                audio.pause();
-                            }, 1500);
-                        } catch (e) {
-                            // Ignore audio errors
+                        // Play the pre-loaded cutting sound
+                        if (audioRef.current) {
+                            audioRef.current.currentTime = 0;
+                            audioRef.current.play().catch(() => {
+                                // Autoplay blocked - try with user interaction context
+                                console.log('Audio autoplay blocked');
+                            });
                         }
                     }
                 });

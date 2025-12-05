@@ -8,16 +8,34 @@ export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isVisible, setIsVisible] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [hideForAppointment, setHideForAppointment] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastScrollY = useRef(0);
 
     useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    useEffect(() => {
         const handleScroll = () => {
             const scrollPosition = window.scrollY;
-            const isScrollingDown = scrollPosition > lastScrollY.current;
 
             // Update scroll state
             setIsScrolled(scrollPosition > 20);
+
+            // Check if we're in the appointment section on mobile
+            const appointmentSection = document.getElementById('appointment');
+            if (appointmentSection && isMobile) {
+                const rect = appointmentSection.getBoundingClientRect();
+                const isInSection = rect.top <= 100 && rect.bottom >= window.innerHeight / 2;
+                setHideForAppointment(isInSection);
+            } else {
+                setHideForAppointment(false);
+            }
 
             // Show navbar when scrolling
             setIsVisible(true);
@@ -31,7 +49,7 @@ export default function Navbar() {
             if (scrollPosition > 100) {
                 scrollTimeoutRef.current = setTimeout(() => {
                     setIsVisible(false);
-                }, 2000); // Hide after 2 seconds of no scrolling
+                }, 2000);
             }
 
             lastScrollY.current = scrollPosition;
@@ -44,7 +62,7 @@ export default function Navbar() {
                 clearTimeout(scrollTimeoutRef.current);
             }
         };
-    }, []);
+    }, [isMobile]);
 
     useEffect(() => {
         if (isMobileMenuOpen) {
@@ -66,13 +84,16 @@ export default function Navbar() {
         { name: 'Contact', href: '#contact' },
     ];
 
+    // Determine visibility - hide for appointment on mobile
+    const shouldHide = (hideForAppointment && isMobile) || !isVisible;
+
     return (
         <nav
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
-                ? 'bg-black/60 backdrop-blur-xl border-b border-white/10 py-3'
-                : 'bg-transparent py-6'
-                } ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}
-            onMouseEnter={() => setIsVisible(true)}
+                    ? 'bg-black/60 backdrop-blur-xl border-b border-white/10 py-3'
+                    : 'bg-transparent py-6'
+                } ${shouldHide ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}
+            onMouseEnter={() => !hideForAppointment && setIsVisible(true)}
         >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                 <div className="flex items-center justify-between">
