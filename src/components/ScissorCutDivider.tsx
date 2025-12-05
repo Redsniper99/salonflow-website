@@ -39,13 +39,19 @@ export default function ScissorCutDivider({ direction = 'right' }: ScissorCutDiv
                         setIsVisible(true);
                         setHasAnimated(true);
 
-                        // Play the pre-loaded cutting sound
+                        // Play the pre-loaded cutting sound (only 2.5 seconds)
                         if (audioRef.current) {
                             audioRef.current.currentTime = 0;
                             audioRef.current.play().catch(() => {
-                                // Autoplay blocked - try with user interaction context
                                 console.log('Audio autoplay blocked');
                             });
+                            // Stop after 2.5 seconds
+                            setTimeout(() => {
+                                if (audioRef.current) {
+                                    audioRef.current.pause();
+                                    audioRef.current.currentTime = 0;
+                                }
+                            }, 2500);
                         }
                     }
                 });
