@@ -6,6 +6,7 @@ import { gsap, ScrollTrigger } from '@/utils/gsapConfig';
 interface BookingData {
     id: string;
     service: string;
+    wantsStylist: 'yes' | 'no' | '';
     stylist: string;
     date: string;
     time: string;
@@ -17,19 +18,42 @@ interface BookingData {
 
 const steps = [
     { id: 1, title: 'Service', icon: '✂️', subtitle: 'Choose your treatment' },
-    { id: 2, title: 'Stylist', icon: '👩‍🦰', subtitle: 'Pick your expert' },
-    { id: 3, title: 'Schedule', icon: '📅', subtitle: 'Select date & time' },
-    { id: 4, title: 'Details', icon: '📝', subtitle: 'Your information' },
-    { id: 5, title: 'Confirm', icon: '✓', subtitle: 'Review & Submit' },
+    { id: 2, title: 'Preference', icon: '🤔', subtitle: 'Stylist preference' },
+    { id: 3, title: 'Stylist', icon: '👩‍🦰', subtitle: 'Pick your expert' },
+    { id: 4, title: 'Schedule', icon: '📅', subtitle: 'Select date & time' },
+    { id: 5, title: 'Details', icon: '📝', subtitle: 'Your information' },
+    { id: 6, title: 'Confirm', icon: '✓', subtitle: 'Review & Submit' },
+];
+
+const serviceCategories = [
+    { id: 'hair', name: 'Hair', icon: '✂️' },
+    { id: 'skin', name: 'Skin & Spa', icon: '💆' },
+    { id: 'nails', name: 'Nails', icon: '💅' },
+    { id: 'makeup', name: 'Makeup', icon: '💄' },
 ];
 
 const services = [
-    { id: 'haircut', name: 'Haircut & Styling', price: 45, duration: '45 min', icon: '✂️' },
-    { id: 'coloring', name: 'Hair Coloring', price: 120, duration: '2 hrs', icon: '🎨' },
-    { id: 'spa', name: 'Spa Treatment', price: 85, duration: '1 hr', icon: '💆' },
-    { id: 'nails', name: 'Nail Care', price: 55, duration: '1 hr', icon: '💅' },
-    { id: 'makeup', name: 'Makeup', price: 75, duration: '1 hr', icon: '💄' },
-    { id: 'bridal', name: 'Bridal Package', price: 350, duration: '4 hrs', icon: '👰' },
+    // Hair Services
+    { id: 'haircut', name: 'Haircut & Styling', price: 45, duration: '45 min', category: 'hair', image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200&h=200&fit=crop' },
+    { id: 'coloring', name: 'Hair Coloring', price: 120, duration: '2 hrs', category: 'hair', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=200&h=200&fit=crop' },
+    { id: 'highlights', name: 'Highlights', price: 150, duration: '2.5 hrs', category: 'hair', image: 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=200&h=200&fit=crop' },
+    { id: 'keratin', name: 'Keratin Treatment', price: 200, duration: '3 hrs', category: 'hair', image: 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=200&h=200&fit=crop' },
+    { id: 'blowdry', name: 'Blow Dry', price: 35, duration: '30 min', category: 'hair', image: 'https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?w=200&h=200&fit=crop' },
+    { id: 'extensions', name: 'Hair Extensions', price: 300, duration: '4 hrs', category: 'hair', image: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=200&h=200&fit=crop' },
+    // Skin & Spa Services
+    { id: 'facial', name: 'Facial Treatment', price: 85, duration: '1 hr', category: 'skin', image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=200&h=200&fit=crop' },
+    { id: 'massage', name: 'Body Massage', price: 100, duration: '1.5 hrs', category: 'skin', image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=200&h=200&fit=crop' },
+    { id: 'bodyscrub', name: 'Body Scrub', price: 75, duration: '45 min', category: 'skin', image: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=200&h=200&fit=crop' },
+    { id: 'waxing', name: 'Waxing', price: 50, duration: '30 min', category: 'skin', image: 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=200&h=200&fit=crop' },
+    // Nail Services
+    { id: 'manicure', name: 'Manicure', price: 40, duration: '45 min', category: 'nails', image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=200&h=200&fit=crop' },
+    { id: 'pedicure', name: 'Pedicure', price: 50, duration: '1 hr', category: 'nails', image: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=200&h=200&fit=crop' },
+    { id: 'gelpolish', name: 'Gel Polish', price: 55, duration: '1 hr', category: 'nails', image: 'https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=200&h=200&fit=crop' },
+    { id: 'nailart', name: 'Nail Art', price: 70, duration: '1.5 hrs', category: 'nails', image: 'https://images.unsplash.com/photo-1604654894894-e23e63ea7e45?w=200&h=200&fit=crop' },
+    // Makeup Services
+    { id: 'daymakeup', name: 'Day Makeup', price: 65, duration: '45 min', category: 'makeup', image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=200&h=200&fit=crop' },
+    { id: 'partymakeup', name: 'Party Makeup', price: 85, duration: '1 hr', category: 'makeup', image: 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=200&h=200&fit=crop' },
+    { id: 'bridal', name: 'Bridal Package', price: 350, duration: '4 hrs', category: 'makeup', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=200&h=200&fit=crop' },
 ];
 
 const stylists = [
@@ -41,12 +65,12 @@ const stylists = [
 
 const timeSlots = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'];
 
-let bookingIdCounter = 1;
-const generateId = () => `booking-${bookingIdCounter++}`;
+const generateId = () => `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
 const createEmptyBooking = (): BookingData => ({
     id: generateId(),
     service: '',
+    wantsStylist: '',
     stylist: '',
     date: '',
     time: '',
@@ -64,6 +88,7 @@ export default function AppointmentSection() {
 
     const [bookings, setBookings] = useState<BookingData[]>(() => [createEmptyBooking()]);
     const [currentBookingIndex, setCurrentBookingIndex] = useState(0);
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
     const currentBooking = bookings[currentBookingIndex] || bookings[0] || createEmptyBooking();
 
@@ -76,13 +101,25 @@ export default function AppointmentSection() {
     // Navigation functions
     const goBack = () => {
         if (currentStep > 1) {
-            setCurrentStep(currentStep - 1);
+            // Skip stylist step when going back if user chose 'no preference'
+            if (currentStep === 4 && currentBooking.wantsStylist === 'no') {
+                setCurrentStep(2);
+            } else {
+                setCurrentStep(currentStep - 1);
+            }
         }
     };
 
     const goNext = () => {
         if (currentStep < steps.length) {
-            setCurrentStep(currentStep + 1);
+            // Skip stylist step when going forward if user chose 'no preference'
+            if (currentStep === 2 && currentBooking.wantsStylist === 'no') {
+                // Set a placeholder stylist as "any available"
+                updateCurrentBooking({ stylist: 'any' });
+                setCurrentStep(4);
+            } else {
+                setCurrentStep(currentStep + 1);
+            }
         }
     };
 
@@ -90,9 +127,10 @@ export default function AppointmentSection() {
     const canProceed = () => {
         switch (currentStep) {
             case 1: return !!currentBooking.service;
-            case 2: return !!currentBooking.stylist;
-            case 3: return !!currentBooking.date && !!currentBooking.time;
-            case 4: return !!currentBooking.name && !!currentBooking.email && !!currentBooking.phone;
+            case 2: return !!currentBooking.wantsStylist;
+            case 3: return currentBooking.wantsStylist === 'no' || !!currentBooking.stylist;
+            case 4: return !!currentBooking.date && !!currentBooking.time;
+            case 5: return !!currentBooking.name && !!currentBooking.email && !!currentBooking.phone;
             default: return true;
         }
     };
@@ -166,7 +204,8 @@ export default function AppointmentSection() {
     };
 
     const isBookingComplete = (booking: BookingData) => {
-        return booking.service && booking.stylist && booking.date && booking.time;
+        const stylistComplete = booking.wantsStylist === 'no' || booking.stylist;
+        return booking.service && booking.wantsStylist && stylistComplete && booking.date && booking.time;
     };
 
     const completedBookings = bookings.filter(isBookingComplete);
@@ -183,7 +222,6 @@ export default function AppointmentSection() {
 
         alert(`🎉 ${completedBookings.length} appointment${completedBookings.length > 1 ? 's' : ''} booked successfully!`);
 
-        bookingIdCounter = 1;
         setBookings([createEmptyBooking()]);
         setCurrentBookingIndex(0);
         setCurrentStep(1);
@@ -212,8 +250,8 @@ export default function AppointmentSection() {
                     onClick={goNext}
                     disabled={!canProceed()}
                     className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${canProceed()
-                            ? 'bg-gradient-to-r from-primary-400 to-primary-600 text-white shadow-[0_0_20px_rgba(116,150,116,0.4)] hover:scale-105'
-                            : 'bg-white/10 text-white/40 cursor-not-allowed'
+                        ? 'bg-gradient-to-r from-primary-400 to-primary-600 text-white shadow-[0_0_20px_rgba(116,150,116,0.4)] hover:scale-105'
+                        : 'bg-white/10 text-white/40 cursor-not-allowed'
                         }`}
                 >
                     Next
@@ -244,10 +282,10 @@ export default function AppointmentSection() {
                             <div key={s.id} className="flex items-center">
                                 <div
                                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${currentStep > s.id
-                                            ? 'bg-primary-400 text-white'
-                                            : currentStep === s.id
-                                                ? 'bg-primary-400 text-white ring-2 ring-primary-400/50 ring-offset-2 ring-offset-black'
-                                                : 'bg-white/10 text-white/40'
+                                        ? 'bg-primary-400 text-white'
+                                        : currentStep === s.id
+                                            ? 'bg-primary-400 text-white ring-2 ring-primary-400/50 ring-offset-2 ring-offset-black'
+                                            : 'bg-white/10 text-white/40'
                                         }`}
                                 >
                                     {currentStep > s.id ? '✓' : index + 1}
@@ -283,39 +321,130 @@ export default function AppointmentSection() {
                     </div>
 
                     {/* Step Content */}
-                    <div className="px-4 pb-4">
+                    <div className="px-4 pb-4 flex-1 overflow-hidden flex flex-col">
                         {/* Step 1: Services */}
-                        <div className={currentStep === 1 ? '' : 'hidden'}>
-                            <div className="grid grid-cols-2 gap-2">
-                                {services.map((service) => (
+                        <div className={currentStep === 1 ? 'flex flex-col h-full' : 'hidden'}>
+                            {/* Category Tabs */}
+                            <div className="flex gap-2 overflow-x-auto pb-3 mb-3 scrollbar-hide">
+                                <button
+                                    onClick={() => setSelectedCategory('all')}
+                                    className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${selectedCategory === 'all'
+                                        ? 'bg-primary-400 text-white'
+                                        : 'bg-white/10 text-white/70 hover:bg-white/20'
+                                        }`}
+                                >
+                                    All Services
+                                </button>
+                                {serviceCategories.map((cat) => (
                                     <button
-                                        key={service.id}
-                                        onClick={() => updateCurrentBooking({ service: service.id })}
-                                        className={`p-3 rounded-xl border-2 transition-all duration-300 text-left ${currentBooking.service === service.id
-                                                ? 'border-primary-400 bg-primary-400/10 shadow-[0_0_15px_rgba(116,150,116,0.3)]'
-                                                : 'border-white/10 bg-white/5'
+                                        key={cat.id}
+                                        onClick={() => setSelectedCategory(cat.id)}
+                                        className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1 ${selectedCategory === cat.id
+                                            ? 'bg-primary-400 text-white'
+                                            : 'bg-white/10 text-white/70 hover:bg-white/20'
                                             }`}
                                     >
-                                        <span className="text-2xl block mb-1">{service.icon}</span>
-                                        <h4 className="font-bold text-white text-xs">{service.name}</h4>
-                                        <p className="text-white/50 text-[10px]">{service.duration}</p>
-                                        <p className="text-primary-400 font-bold text-sm mt-1">${service.price}</p>
+                                        <span>{cat.icon}</span>
+                                        {cat.name}
                                     </button>
                                 ))}
                             </div>
-                            <NavButtons showBack={false} />
+
+                            {/* Scrollable Services Grid */}
+                            <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+                                <div className="grid grid-cols-2 gap-2">
+                                    {services
+                                        .filter(s => selectedCategory === 'all' || s.category === selectedCategory)
+                                        .map((service) => {
+                                            const categoryInfo = serviceCategories.find(c => c.id === service.category);
+                                            return (
+                                                <button
+                                                    key={service.id}
+                                                    onClick={() => updateCurrentBooking({ service: service.id })}
+                                                    className={`group relative p-3 rounded-xl border-2 transition-all duration-300 text-left overflow-hidden ${currentBooking.service === service.id
+                                                        ? 'border-primary-400 bg-primary-400/10 shadow-[0_0_15px_rgba(116,150,116,0.3)]'
+                                                        : 'border-white/10 bg-white/5 hover:border-primary-400/50'
+                                                        }`}
+                                                >
+                                                    {/* Hover Image Overlay */}
+                                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500 overflow-hidden">
+                                                        <img
+                                                            src={service.image}
+                                                            alt={service.name}
+                                                            className="w-full h-full object-cover transform scale-110 group-hover:scale-100 transition-transform duration-700"
+                                                        />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                                                    </div>
+
+                                                    {/* Content */}
+                                                    <div className="relative z-10">
+                                                        <span className="text-xl block mb-1 group-hover:opacity-0 transition-opacity">{categoryInfo?.icon}</span>
+                                                        <h4 className="font-bold text-white text-xs group-hover:text-white">{service.name}</h4>
+                                                        <p className="text-white/50 text-[10px] group-hover:text-white/70">{service.duration}</p>
+                                                        <p className="text-primary-400 font-bold text-sm mt-1">${service.price}</p>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                </div>
+                            </div>
+                            <div className="pt-3">
+                                <NavButtons showBack={false} />
+                            </div>
                         </div>
 
-                        {/* Step 2: Stylists */}
+                        {/* Step 2: Stylist Preference */}
                         <div className={currentStep === 2 ? '' : 'hidden'}>
+                            <div className="space-y-4">
+                                <p className="text-white/80 text-center mb-4">
+                                    Are you a new customer or would you like any available stylist?
+                                </p>
+                                <div className="grid grid-cols-1 gap-3">
+                                    <button
+                                        onClick={() => updateCurrentBooking({ wantsStylist: 'yes', stylist: '' })}
+                                        className={`p-5 rounded-xl border-2 transition-all duration-300 text-left ${currentBooking.wantsStylist === 'yes'
+                                            ? 'border-primary-400 bg-primary-400/10 shadow-[0_0_15px_rgba(116,150,116,0.3)]'
+                                            : 'border-white/10 bg-white/5'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-3xl">👩‍🦰</span>
+                                            <div className="flex-1">
+                                                <h4 className="font-bold text-white text-base">Yes, I want to choose a stylist</h4>
+                                                <p className="text-white/60 text-xs">I have a preferred stylist or want to pick one</p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={() => updateCurrentBooking({ wantsStylist: 'no', stylist: 'any' })}
+                                        className={`p-5 rounded-xl border-2 transition-all duration-300 text-left ${currentBooking.wantsStylist === 'no'
+                                            ? 'border-primary-400 bg-primary-400/10 shadow-[0_0_15px_rgba(116,150,116,0.3)]'
+                                            : 'border-white/10 bg-white/5'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-3xl">🎲</span>
+                                            <div className="flex-1">
+                                                <h4 className="font-bold text-white text-base">No preference</h4>
+                                                <p className="text-white/60 text-xs">I&apos;m new or any available stylist is fine</p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                            <NavButtons />
+                        </div>
+
+                        {/* Step 3: Stylists */}
+                        <div className={currentStep === 3 ? '' : 'hidden'}>
                             <div className="grid grid-cols-1 gap-3">
                                 {stylists.map((stylist) => (
                                     <button
                                         key={stylist.id}
                                         onClick={() => updateCurrentBooking({ stylist: stylist.id })}
                                         className={`p-4 rounded-xl border-2 transition-all duration-300 ${currentBooking.stylist === stylist.id
-                                                ? 'border-primary-400 bg-primary-400/10 shadow-[0_0_15px_rgba(116,150,116,0.3)]'
-                                                : 'border-white/10 bg-white/5'
+                                            ? 'border-primary-400 bg-primary-400/10 shadow-[0_0_15px_rgba(116,150,116,0.3)]'
+                                            : 'border-white/10 bg-white/5'
                                             }`}
                                     >
                                         <div className="flex items-center gap-4">
@@ -335,8 +464,8 @@ export default function AppointmentSection() {
                             <NavButtons />
                         </div>
 
-                        {/* Step 3: Schedule */}
-                        <div className={currentStep === 3 ? '' : 'hidden'}>
+                        {/* Step 4: Schedule */}
+                        <div className={currentStep === 4 ? '' : 'hidden'}>
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-white/80 mb-2 text-sm font-medium">Select Date</label>
@@ -356,8 +485,8 @@ export default function AppointmentSection() {
                                                 key={time}
                                                 onClick={() => updateCurrentBooking({ time })}
                                                 className={`p-3 rounded-lg text-xs font-medium transition-all ${currentBooking.time === time
-                                                        ? 'bg-primary-400 text-white'
-                                                        : 'border border-white/10 bg-white/5 text-white/80'
+                                                    ? 'bg-primary-400 text-white'
+                                                    : 'border border-white/10 bg-white/5 text-white/80'
                                                     }`}
                                             >
                                                 {time}
@@ -369,8 +498,8 @@ export default function AppointmentSection() {
                             <NavButtons />
                         </div>
 
-                        {/* Step 4: Details */}
-                        <div className={currentStep === 4 ? '' : 'hidden'}>
+                        {/* Step 5: Details */}
+                        <div className={currentStep === 5 ? '' : 'hidden'}>
                             <div className="space-y-3">
                                 <input type="text" value={currentBooking.name} onChange={(e) => updateCurrentBooking({ name: e.target.value })} placeholder="Full Name" className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white text-base placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all" />
                                 <input type="email" value={currentBooking.email} onChange={(e) => updateCurrentBooking({ email: e.target.value })} placeholder="Email Address" className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white text-base placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all" />
@@ -380,22 +509,24 @@ export default function AppointmentSection() {
                             <NavButtons />
                         </div>
 
-                        {/* Step 5: Confirm */}
-                        <div className={currentStep === 5 ? '' : 'hidden'}>
+                        {/* Step 6: Confirm */}
+                        <div className={currentStep === 6 ? '' : 'hidden'}>
                             <div className="space-y-4">
                                 {completedBookings.map((booking, index) => {
                                     const service = services.find(s => s.id === booking.service);
                                     const stylist = stylists.find(s => s.id === booking.stylist);
+                                    const stylistDisplay = booking.wantsStylist === 'no' ? 'Any Available Stylist' : stylist?.name;
+                                    const categoryInfo = serviceCategories.find(c => c.id === service?.category);
                                     return (
                                         <div key={booking.id} className="bg-white/5 rounded-xl p-3 border border-white/10 relative">
                                             {bookings.length > 1 && (
                                                 <button onClick={() => removeBooking(index)} className="absolute top-2 right-2 w-6 h-6 bg-red-500/20 hover:bg-red-500/40 rounded-full flex items-center justify-center text-red-400 text-xs transition-colors">✕</button>
                                             )}
                                             <div className="flex items-start gap-3">
-                                                <span className="text-2xl">{service?.icon}</span>
+                                                <span className="text-2xl">{categoryInfo?.icon}</span>
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="font-bold text-white text-sm">{service?.name}</h4>
-                                                    <p className="text-white/50 text-xs">with {stylist?.name}</p>
+                                                    <p className="text-white/50 text-xs">with {stylistDisplay}</p>
                                                     <p className="text-white/50 text-xs">{booking.date} • {booking.time}</p>
                                                 </div>
                                                 <span className="text-primary-400 font-bold">${service?.price}</span>
@@ -457,8 +588,8 @@ export default function AppointmentSection() {
                             {steps.map((s) => (
                                 <div key={s.id} className="relative z-10 flex items-center gap-4">
                                     <div className={`w-12 h-12 xl:w-14 xl:h-14 rounded-full flex items-center justify-center text-lg xl:text-xl transition-all duration-500 ${currentStep > s.id ? 'bg-primary-400 text-white shadow-[0_0_15px_rgba(116,150,116,0.5)]'
-                                            : currentStep === s.id ? 'bg-primary-400 text-white scale-110 shadow-[0_0_25px_#749674]'
-                                                : 'bg-white/10 text-white/40'
+                                        : currentStep === s.id ? 'bg-primary-400 text-white scale-110 shadow-[0_0_25px_#749674]'
+                                            : 'bg-white/10 text-white/40'
                                         }`}>
                                         {currentStep > s.id ? '✓' : s.icon}
                                     </div>
@@ -473,30 +604,117 @@ export default function AppointmentSection() {
                 </div>
 
                 {/* Desktop Content */}
-                <div className="flex-1 flex items-center justify-center px-12 py-4 overflow-y-auto">
-                    <div className="w-full max-w-3xl">
+                <div className="flex-1 flex items-center justify-center px-12 py-4 overflow-hidden">
+                    <div className="w-full max-w-4xl h-full flex flex-col">
                         {/* Step 1 */}
-                        <div className={currentStep === 1 ? 'animate-fade-in-up' : 'hidden'}>
-                            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4 text-center">Choose Your Service</h3>
-                            <p className="text-white/60 mb-6 text-center">Select the perfect treatment</p>
-                            <div className="grid grid-cols-3 gap-4">
-                                {services.map((service) => (
-                                    <button key={service.id} onClick={() => updateCurrentBooking({ service: service.id })} className={`p-5 rounded-xl border-2 transition-all duration-300 text-left ${currentBooking.service === service.id ? 'border-primary-400 bg-primary-400/20' : 'border-white/10 bg-white/5 hover:border-primary-400/50'}`}>
-                                        <span className="text-3xl block mb-2">{service.icon}</span>
-                                        <h4 className="font-bold text-white text-base">{service.name}</h4>
-                                        <p className="text-white/60 text-xs">{service.duration}</p>
-                                        <p className="text-primary-400 font-bold mt-1 text-lg">${service.price}</p>
+                        <div className={currentStep === 1 ? 'animate-fade-in-up flex flex-col h-full' : 'hidden'}>
+                            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-2 text-center">Choose Your Service</h3>
+                            <p className="text-white/60 mb-4 text-center">Select the perfect treatment</p>
+
+                            {/* Category Tabs */}
+                            <div className="flex justify-center gap-3 mb-4">
+                                <button
+                                    onClick={() => setSelectedCategory('all')}
+                                    className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${selectedCategory === 'all'
+                                        ? 'bg-primary-400 text-white shadow-[0_0_15px_rgba(116,150,116,0.4)]'
+                                        : 'bg-white/10 text-white/70 hover:bg-white/20'
+                                        }`}
+                                >
+                                    All
+                                </button>
+                                {serviceCategories.map((cat) => (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setSelectedCategory(cat.id)}
+                                        className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${selectedCategory === cat.id
+                                            ? 'bg-primary-400 text-white shadow-[0_0_15px_rgba(116,150,116,0.4)]'
+                                            : 'bg-white/10 text-white/70 hover:bg-white/20'
+                                            }`}
+                                    >
+                                        <span>{cat.icon}</span>
+                                        {cat.name}
                                     </button>
                                 ))}
                             </div>
-                            <NavButtons showBack={false} />
+
+                            {/* Scrollable Services Grid */}
+                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {services
+                                        .filter(s => selectedCategory === 'all' || s.category === selectedCategory)
+                                        .map((service) => {
+                                            const categoryInfo = serviceCategories.find(c => c.id === service.category);
+                                            return (
+                                                <button
+                                                    key={service.id}
+                                                    onClick={() => updateCurrentBooking({ service: service.id })}
+                                                    className={`group relative p-5 rounded-xl border-2 transition-all duration-300 text-left overflow-hidden h-[140px] ${currentBooking.service === service.id
+                                                        ? 'border-primary-400 bg-primary-400/20 shadow-[0_0_20px_rgba(116,150,116,0.4)]'
+                                                        : 'border-white/10 bg-white/5 hover:border-primary-400/50'}`}
+                                                >
+                                                    {/* Hover Image Overlay */}
+                                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500 overflow-hidden">
+                                                        <img
+                                                            src={service.image}
+                                                            alt={service.name}
+                                                            className="w-full h-full object-cover transform translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-out"
+                                                        />
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-transparent" />
+                                                    </div>
+
+                                                    {/* Content */}
+                                                    <div className="relative z-10 h-full flex flex-col">
+                                                        <span className="text-2xl mb-2 group-hover:opacity-0 transition-opacity">{categoryInfo?.icon}</span>
+                                                        <h4 className="font-bold text-white text-sm group-hover:text-white">{service.name}</h4>
+                                                        <p className="text-white/60 text-xs group-hover:text-white/80">{service.duration}</p>
+                                                        <p className="text-primary-400 font-bold mt-auto text-lg">${service.price}</p>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                </div>
+                            </div>
+                            <div className="pt-4">
+                                <NavButtons showBack={false} />
+                            </div>
                         </div>
 
-                        {/* Step 2 */}
-                        <div className={currentStep === 2 ? 'animate-fade-in-up' : 'hidden'}>
-                            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4 text-center">Select Your Stylist</h3>
-                            <p className="text-white/60 mb-6 text-center">Choose from our experts</p>
-                            <div className="grid grid-cols-2 gap-4">
+                        {/* Step 2 - Preference */}
+                        <div className={currentStep === 2 ? 'animate-fade-in-up flex flex-col items-center justify-center h-full' : 'hidden'}>
+                            <div className="text-center">
+                                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">Stylist Preference</h3>
+                                <p className="text-white/60 mb-6">Would you like to choose a specific stylist?</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-6 max-w-2xl">
+                                <button
+                                    onClick={() => updateCurrentBooking({ wantsStylist: 'yes', stylist: '' })}
+                                    className={`p-8 rounded-xl border-2 transition-all duration-300 text-center ${currentBooking.wantsStylist === 'yes' ? 'border-primary-400 bg-primary-400/20' : 'border-white/10 bg-white/5 hover:border-primary-400/50'}`}
+                                >
+                                    <span className="text-5xl block mb-4">👩‍🦰</span>
+                                    <h4 className="font-bold text-white text-xl mb-2">Yes, I&apos;ll choose</h4>
+                                    <p className="text-white/60 text-sm">I have a preferred stylist or want to select one</p>
+                                </button>
+                                <button
+                                    onClick={() => updateCurrentBooking({ wantsStylist: 'no', stylist: 'any' })}
+                                    className={`p-8 rounded-xl border-2 transition-all duration-300 text-center ${currentBooking.wantsStylist === 'no' ? 'border-primary-400 bg-primary-400/20' : 'border-white/10 bg-white/5 hover:border-primary-400/50'}`}
+                                >
+                                    <span className="text-5xl block mb-4">🎲</span>
+                                    <h4 className="font-bold text-white text-xl mb-2">No preference</h4>
+                                    <p className="text-white/60 text-sm">I&apos;m new or any available stylist is fine</p>
+                                </button>
+                            </div>
+                            <div className="mt-6">
+                                <NavButtons />
+                            </div>
+                        </div>
+
+                        {/* Step 3 - Stylists */}
+                        <div className={currentStep === 3 ? 'animate-fade-in-up flex flex-col items-center justify-center h-full' : 'hidden'}>
+                            <div className="text-center">
+                                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">Select Your Stylist</h3>
+                                <p className="text-white/60 mb-6">Choose from our experts</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 max-w-2xl">
                                 {stylists.map((stylist) => (
                                     <button key={stylist.id} onClick={() => updateCurrentBooking({ stylist: stylist.id })} className={`p-6 rounded-xl border-2 transition-all duration-300 text-left ${currentBooking.stylist === stylist.id ? 'border-primary-400 bg-primary-400/20' : 'border-white/10 bg-white/5 hover:border-primary-400/50'}`}>
                                         <div className="flex items-center gap-4">
@@ -510,14 +728,18 @@ export default function AppointmentSection() {
                                     </button>
                                 ))}
                             </div>
-                            <NavButtons />
+                            <div className="mt-6">
+                                <NavButtons />
+                            </div>
                         </div>
 
-                        {/* Step 3 */}
-                        <div className={currentStep === 3 ? 'animate-fade-in-up max-w-lg mx-auto' : 'hidden'}>
-                            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4 text-center">Pick Date & Time</h3>
-                            <p className="text-white/60 mb-6 text-center">Choose your slot</p>
-                            <div className="space-y-6">
+                        {/* Step 4 - Schedule */}
+                        <div className={currentStep === 4 ? 'animate-fade-in-up flex flex-col items-center justify-center h-full' : 'hidden'}>
+                            <div className="text-center">
+                                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">Pick Date & Time</h3>
+                                <p className="text-white/60 mb-6">Choose your slot</p>
+                            </div>
+                            <div className="space-y-6 w-full max-w-lg">
                                 <div>
                                     <label className="block text-white/80 mb-2 font-medium">Select Date</label>
                                     <input type="date" value={currentBooking.date} onChange={(e) => updateCurrentBooking({ date: e.target.value })} min={new Date().toISOString().split('T')[0]} className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white focus:border-primary-400 focus:outline-none transition-all" />
@@ -531,65 +753,77 @@ export default function AppointmentSection() {
                                     </div>
                                 </div>
                             </div>
-                            <NavButtons />
+                            <div className="mt-6">
+                                <NavButtons />
+                            </div>
                         </div>
 
-                        {/* Step 4 */}
-                        <div className={currentStep === 4 ? 'animate-fade-in-up max-w-md mx-auto' : 'hidden'}>
-                            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4 text-center">Your Details</h3>
-                            <p className="text-white/60 mb-6 text-center">Tell us about you</p>
-                            <div className="space-y-4">
+                        {/* Step 5 - Details */}
+                        <div className={currentStep === 5 ? 'animate-fade-in-up flex flex-col items-center justify-center h-full' : 'hidden'}>
+                            <div className="text-center">
+                                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">Your Details</h3>
+                                <p className="text-white/60 mb-6">Tell us about you</p>
+                            </div>
+                            <div className="space-y-4 w-full max-w-md">
                                 <input type="text" value={currentBooking.name} onChange={(e) => updateCurrentBooking({ name: e.target.value })} placeholder="Full Name" className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all" />
                                 <input type="email" value={currentBooking.email} onChange={(e) => updateCurrentBooking({ email: e.target.value })} placeholder="Email Address" className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all" />
                                 <input type="tel" value={currentBooking.phone} onChange={(e) => updateCurrentBooking({ phone: e.target.value })} placeholder="Phone Number" className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all" />
                                 <textarea value={currentBooking.notes} onChange={(e) => updateCurrentBooking({ notes: e.target.value })} placeholder="Special requests" rows={3} className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all resize-none" />
                             </div>
-                            <NavButtons />
+                            <div className="mt-6">
+                                <NavButtons />
+                            </div>
                         </div>
 
-                        {/* Step 5 */}
-                        <div className={currentStep === 5 ? 'animate-fade-in-up max-w-2xl mx-auto' : 'hidden'}>
-                            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4 text-center">Review Your Bookings</h3>
-                            <p className="text-white/60 mb-6 text-center">{completedBookings.length} appointment{completedBookings.length !== 1 ? 's' : ''} to confirm</p>
+                        {/* Step 6 - Confirm */}
+                        <div className={currentStep === 6 ? 'animate-fade-in-up flex flex-col items-center justify-center h-full' : 'hidden'}>
+                            <div className="text-center">
+                                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">Review Your Bookings</h3>
+                                <p className="text-white/60 mb-6">{completedBookings.length} appointment{completedBookings.length !== 1 ? 's' : ''} to confirm</p>
+                            </div>
+                            <div className="w-full max-w-2xl">
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                {completedBookings.map((booking, index) => {
-                                    const service = services.find(s => s.id === booking.service);
-                                    const stylist = stylists.find(s => s.id === booking.stylist);
-                                    return (
-                                        <div key={booking.id} className="bg-white/5 rounded-xl p-4 border border-white/10 relative">
-                                            {completedBookings.length > 1 && (
-                                                <button onClick={() => removeBooking(index)} className="absolute top-3 right-3 w-6 h-6 bg-red-500/20 hover:bg-red-500/40 rounded-full flex items-center justify-center text-red-400 text-xs transition-colors">✕</button>
-                                            )}
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <span className="text-3xl">{service?.icon}</span>
-                                                <div><h4 className="font-bold text-white">{service?.name}</h4><p className="text-white/50 text-sm">with {stylist?.name}</p></div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    {completedBookings.map((booking, index) => {
+                                        const service = services.find(s => s.id === booking.service);
+                                        const stylist = stylists.find(s => s.id === booking.stylist);
+                                        const stylistDisplay = booking.wantsStylist === 'no' ? 'Any Available Stylist' : stylist?.name;
+                                        const categoryInfo = serviceCategories.find(c => c.id === service?.category);
+                                        return (
+                                            <div key={booking.id} className="bg-white/5 rounded-xl p-4 border border-white/10 relative">
+                                                {completedBookings.length > 1 && (
+                                                    <button onClick={() => removeBooking(index)} className="absolute top-3 right-3 w-6 h-6 bg-red-500/20 hover:bg-red-500/40 rounded-full flex items-center justify-center text-red-400 text-xs transition-colors">✕</button>
+                                                )}
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <span className="text-3xl">{categoryInfo?.icon}</span>
+                                                    <div><h4 className="font-bold text-white">{service?.name}</h4><p className="text-white/50 text-sm">with {stylistDisplay}</p></div>
+                                                </div>
+                                                <div className="text-white/60 text-sm space-y-1"><p>📅 {booking.date}</p><p>🕐 {booking.time}</p></div>
+                                                <p className="text-primary-400 font-bold text-xl mt-3">${service?.price}</p>
                                             </div>
-                                            <div className="text-white/60 text-sm space-y-1"><p>📅 {booking.date}</p><p>🕐 {booking.time}</p></div>
-                                            <p className="text-primary-400 font-bold text-xl mt-3">${service?.price}</p>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
 
-                                <button onClick={addAnotherBooking} className="border-2 border-dashed border-primary-400/40 rounded-xl p-6 flex flex-col items-center justify-center gap-2 hover:bg-primary-400/10 hover:border-primary-400 transition-all group min-h-[180px]">
-                                    <span className="text-4xl text-primary-400/60 group-hover:text-primary-400 transition-colors">+</span>
-                                    <span className="text-primary-400/60 group-hover:text-primary-400 font-medium transition-colors">Add Another</span>
-                                </button>
-                            </div>
+                                    <button onClick={addAnotherBooking} className="border-2 border-dashed border-primary-400/40 rounded-xl p-6 flex flex-col items-center justify-center gap-2 hover:bg-primary-400/10 hover:border-primary-400 transition-all group min-h-[180px]">
+                                        <span className="text-4xl text-primary-400/60 group-hover:text-primary-400 transition-colors">+</span>
+                                        <span className="text-primary-400/60 group-hover:text-primary-400 font-medium transition-colors">Add Another</span>
+                                    </button>
+                                </div>
 
-                            <div className="bg-white/5 rounded-xl p-4 border border-white/10 mb-6">
-                                <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/10"><span className="text-white/60">Customer</span><span className="text-white font-medium">{bookings[0]?.name} • {bookings[0]?.email}</span></div>
-                                <div className="flex justify-between items-center"><span className="text-white/60">Total</span><span className="text-primary-400 font-bold text-3xl">${calculateTotal()}</span></div>
-                            </div>
+                                <div className="bg-white/5 rounded-xl p-4 border border-white/10 mb-6">
+                                    <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/10"><span className="text-white/60">Customer</span><span className="text-white font-medium">{bookings[0]?.name} • {bookings[0]?.email}</span></div>
+                                    <div className="flex justify-between items-center"><span className="text-white/60">Total</span><span className="text-primary-400 font-bold text-3xl">${calculateTotal()}</span></div>
+                                </div>
 
-                            <div className="flex gap-4">
-                                <button onClick={goBack} className="flex-1 py-4 rounded-full border-2 border-white/20 text-white/80 hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                                    Back
-                                </button>
-                                <button onClick={handleSubmit} disabled={completedBookings.length === 0} className="flex-[2] py-4 rounded-full font-bold bg-gradient-to-r from-primary-400 to-primary-600 text-white shadow-[0_0_20px_rgba(116,150,116,0.4)] hover:scale-105 transition-all disabled:opacity-50">
-                                    Confirm {completedBookings.length > 1 ? `All ${completedBookings.length} Bookings` : 'Booking'} ✓
-                                </button>
+                                <div className="flex gap-4">
+                                    <button onClick={goBack} className="flex-1 py-4 rounded-full border-2 border-white/20 text-white/80 hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                        Back
+                                    </button>
+                                    <button onClick={handleSubmit} disabled={completedBookings.length === 0} className="flex-[2] py-4 rounded-full font-bold bg-gradient-to-r from-primary-400 to-primary-600 text-white shadow-[0_0_20px_rgba(116,150,116,0.4)] hover:scale-105 transition-all disabled:opacity-50">
+                                        Confirm {completedBookings.length > 1 ? `All ${completedBookings.length} Bookings` : 'Booking'} ✓
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
