@@ -2,6 +2,19 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { gsap, ScrollTrigger } from '@/utils/gsapConfig';
+import {
+    fetchServices,
+    fetchStylistsForService,
+    fetchTimeSlots,
+    fetchConsolidatedAvailability,
+    createBooking,
+    formatTime,
+    getMinDate,
+    type Service,
+    type Stylist,
+    type TimeSlot,
+    type ConsolidatedSlot,
+} from '@/lib/api';
 
 interface BookingData {
     id: string;
@@ -26,44 +39,12 @@ const steps = [
 ];
 
 const serviceCategories = [
-    { id: 'hair', name: 'Hair', icon: '✂️' },
-    { id: 'skin', name: 'Skin & Spa', icon: '💆' },
-    { id: 'nails', name: 'Nails', icon: '💅' },
-    { id: 'makeup', name: 'Makeup', icon: '💄' },
+    { id: 'all', name: 'All', icon: '✨' },
+    { id: 'Hair', name: 'Hair', icon: '✂️' },
+    { id: 'Spa', name: 'Skin & Spa', icon: '💆' },
+    { id: 'Nails', name: 'Nails', icon: '💅' },
+    { id: 'Bridal', name: 'Bridal', icon: '👰' },
 ];
-
-const services = [
-    // Hair Services
-    { id: 'haircut', name: 'Haircut & Styling', price: 45, duration: '45 min', category: 'hair', image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200&h=200&fit=crop' },
-    { id: 'coloring', name: 'Hair Coloring', price: 120, duration: '2 hrs', category: 'hair', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=200&h=200&fit=crop' },
-    { id: 'highlights', name: 'Highlights', price: 150, duration: '2.5 hrs', category: 'hair', image: 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=200&h=200&fit=crop' },
-    { id: 'keratin', name: 'Keratin Treatment', price: 200, duration: '3 hrs', category: 'hair', image: 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=200&h=200&fit=crop' },
-    { id: 'blowdry', name: 'Blow Dry', price: 35, duration: '30 min', category: 'hair', image: 'https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?w=200&h=200&fit=crop' },
-    { id: 'extensions', name: 'Hair Extensions', price: 300, duration: '4 hrs', category: 'hair', image: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=200&h=200&fit=crop' },
-    // Skin & Spa Services
-    { id: 'facial', name: 'Facial Treatment', price: 85, duration: '1 hr', category: 'skin', image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=200&h=200&fit=crop' },
-    { id: 'massage', name: 'Body Massage', price: 100, duration: '1.5 hrs', category: 'skin', image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=200&h=200&fit=crop' },
-    { id: 'bodyscrub', name: 'Body Scrub', price: 75, duration: '45 min', category: 'skin', image: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=200&h=200&fit=crop' },
-    { id: 'waxing', name: 'Waxing', price: 50, duration: '30 min', category: 'skin', image: 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=200&h=200&fit=crop' },
-    // Nail Services
-    { id: 'manicure', name: 'Manicure', price: 40, duration: '45 min', category: 'nails', image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=200&h=200&fit=crop' },
-    { id: 'pedicure', name: 'Pedicure', price: 50, duration: '1 hr', category: 'nails', image: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=200&h=200&fit=crop' },
-    { id: 'gelpolish', name: 'Gel Polish', price: 55, duration: '1 hr', category: 'nails', image: 'https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=200&h=200&fit=crop' },
-    { id: 'nailart', name: 'Nail Art', price: 70, duration: '1.5 hrs', category: 'nails', image: 'https://images.unsplash.com/photo-1604654894894-e23e63ea7e45?w=200&h=200&fit=crop' },
-    // Makeup Services
-    { id: 'daymakeup', name: 'Day Makeup', price: 65, duration: '45 min', category: 'makeup', image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=200&h=200&fit=crop' },
-    { id: 'partymakeup', name: 'Party Makeup', price: 85, duration: '1 hr', category: 'makeup', image: 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=200&h=200&fit=crop' },
-    { id: 'bridal', name: 'Bridal Package', price: 350, duration: '4 hrs', category: 'makeup', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=200&h=200&fit=crop' },
-];
-
-const stylists = [
-    { id: 'emma', name: 'Emma Wilson', specialty: 'Hair Coloring', rating: 4.9, image: '👩‍🦰' },
-    { id: 'james', name: 'James Chen', specialty: 'Precision Cuts', rating: 4.8, image: '👨‍🦱' },
-    { id: 'sofia', name: 'Sofia Garcia', specialty: 'Bridal Specialist', rating: 5.0, image: '👩‍🦳' },
-    { id: 'alex', name: 'Alex Johnson', specialty: 'Modern Styles', rating: 4.7, image: '🧑‍🦲' },
-];
-
-const timeSlots = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'];
 
 const generateId = () => `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
@@ -86,6 +67,15 @@ export default function AppointmentSection() {
     const [isMounted, setIsMounted] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
+    // API Data States
+    const [services, setServices] = useState<Service[]>([]);
+    const [stylists, setStylists] = useState<Stylist[]>([]);
+    const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+    const [consolidatedSlots, setConsolidatedSlots] = useState<ConsolidatedSlot[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Booking States
     const [bookings, setBookings] = useState<BookingData[]>(() => [createEmptyBooking()]);
     const [currentBookingIndex, setCurrentBookingIndex] = useState(0);
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -98,12 +88,14 @@ export default function AppointmentSection() {
         ));
     };
 
+    // Get selected service object
+    const selectedService = services.find(s => s.id === currentBooking.service);
+
     // Navigation functions
     const goBack = () => {
         if (currentStep > 1) {
-            // Skip stylist step when going back if user chose 'no preference'
             if (currentStep === 4 && currentBooking.wantsStylist === 'no') {
-                setCurrentStep(2);
+                setCurrentStep(2); // Skip stylist step
             } else {
                 setCurrentStep(currentStep - 1);
             }
@@ -112,29 +104,27 @@ export default function AppointmentSection() {
 
     const goNext = () => {
         if (currentStep < steps.length) {
-            // Skip stylist step when going forward if user chose 'no preference'
             if (currentStep === 2 && currentBooking.wantsStylist === 'no') {
-                // Set a placeholder stylist as "any available"
                 updateCurrentBooking({ stylist: 'any' });
-                setCurrentStep(4);
+                setCurrentStep(4); // Skip to schedule
             } else {
                 setCurrentStep(currentStep + 1);
             }
         }
     };
 
-    // Check if can proceed to next step
     const canProceed = () => {
         switch (currentStep) {
             case 1: return !!currentBooking.service;
             case 2: return !!currentBooking.wantsStylist;
             case 3: return currentBooking.wantsStylist === 'no' || !!currentBooking.stylist;
             case 4: return !!currentBooking.date && !!currentBooking.time;
-            case 5: return !!currentBooking.name && !!currentBooking.email && !!currentBooking.phone;
+            case 5: return !!currentBooking.name && !!currentBooking.phone;
             default: return true;
         }
     };
 
+    // Mount effects
     useEffect(() => {
         setIsMounted(true);
         const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -143,6 +133,92 @@ export default function AppointmentSection() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
+    // Fetch services on mount
+    useEffect(() => {
+        async function loadServices() {
+            try {
+                setLoading(true);
+                const data = await fetchServices();
+                setServices(data);
+                setError(null);
+            } catch (err) {
+                console.error('Error loading services:', err);
+                setError('Failed to load services. Please refresh the page.');
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadServices();
+    }, []);
+
+    // Fetch stylists when service is selected (for preferred stylist flow)
+    useEffect(() => {
+        if (!currentBooking.service || currentBooking.wantsStylist !== 'yes') {
+            return;
+        }
+
+        async function loadStylists() {
+            try {
+                setLoading(true);
+                const data = await fetchStylistsForService(currentBooking.service, currentBooking.date);
+                setStylists(data);
+                setError(null);
+            } catch (err) {
+                console.error('Error loading stylists:', err);
+                setError('Failed to load stylists.');
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadStylists();
+    }, [currentBooking.service, currentBooking.wantsStylist, currentBooking.date]);
+
+    // Fetch time slots - Different logic for preference vs no preference
+    useEffect(() => {
+        if (!currentBooking.date || !currentBooking.service) {
+            setTimeSlots([]);
+            setConsolidatedSlots([]);
+            return;
+        }
+
+        const isNoPreference = currentBooking.wantsStylist === 'no' || currentBooking.stylist === 'any';
+
+        async function loadAvailability() {
+            try {
+                setLoading(true);
+
+                if (isNoPreference) {
+                    // NO PREFERENCE: Use consolidated availability API
+                    const data = await fetchConsolidatedAvailability(
+                        currentBooking.service,
+                        currentBooking.date,
+                        selectedService?.duration || 30
+                    );
+                    setConsolidatedSlots(data.slots);
+                    setTimeSlots([]);
+                } else if (currentBooking.stylist && currentBooking.stylist !== 'any') {
+                    // SPECIFIC STYLIST: Load their time slots
+                    const data = await fetchTimeSlots(
+                        currentBooking.stylist,
+                        currentBooking.date,
+                        selectedService?.duration || 30
+                    );
+                    setTimeSlots(data);
+                    setConsolidatedSlots([]);
+                }
+
+                setError(null);
+            } catch (err) {
+                console.error('Error loading availability:', err);
+                setError('Failed to load available times.');
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadAvailability();
+    }, [currentBooking.service, currentBooking.date, currentBooking.stylist, currentBooking.wantsStylist, selectedService?.duration]);
+
+    // ScrollTrigger for pinning
     useEffect(() => {
         if (!isMounted || !sectionRef.current) return;
 
@@ -158,15 +234,16 @@ export default function AppointmentSection() {
                     start: 'top top',
                     end: `+=${steps.length * 500}`,
                     pin: true,
-                    scrub: 1,
+                    pinSpacing: true,
                     anticipatePin: 1,
                     invalidateOnRefresh: true,
-                    onUpdate: (self) => {
+                    scrub: isMobile ? 1 : false,
+                    onUpdate: isMobile ? (self) => {
                         const progress = self.progress;
                         const stepIndex = Math.floor(progress * steps.length);
                         const newStep = Math.min(Math.max(stepIndex + 1, 1), steps.length);
                         setCurrentStep(prev => prev !== newStep ? newStep : prev);
-                    },
+                    } : undefined,
                 });
             }, section);
         }, 300);
@@ -175,59 +252,52 @@ export default function AppointmentSection() {
             clearTimeout(timer);
             if (ctx) ctx.revert();
         };
-    }, [isMounted]);
+    }, [isMounted, isMobile]);
 
-    const addAnotherBooking = () => {
-        const newBooking = createEmptyBooking();
-        newBooking.name = bookings[0]?.name || '';
-        newBooking.email = bookings[0]?.email || '';
-        newBooking.phone = bookings[0]?.phone || '';
-        setBookings(prev => [...prev, newBooking]);
-        setCurrentBookingIndex(bookings.length);
-        setCurrentStep(1);
-    };
+    // Handle booking submission
+    const handleSubmit = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-    const removeBooking = (index: number) => {
-        if (bookings.length <= 1) return;
-        const newBookings = bookings.filter((_, i) => i !== index);
-        setBookings(newBookings);
-        if (currentBookingIndex >= newBookings.length) {
-            setCurrentBookingIndex(Math.max(0, newBookings.length - 1));
+            // Determine stylist ID - use 'NO_PREFERENCE' for auto-assignment
+            const isNoPreference = currentBooking.wantsStylist === 'no' || currentBooking.stylist === 'any';
+            const stylistId = isNoPreference ? 'NO_PREFERENCE' : currentBooking.stylist;
+
+            const result = await createBooking({
+                customer: {
+                    name: currentBooking.name,
+                    phone: currentBooking.phone,
+                    email: currentBooking.email || undefined,
+                },
+                appointment: {
+                    service_id: currentBooking.service,
+                    stylist_id: stylistId,
+                    date: currentBooking.date,
+                    time: currentBooking.time,
+                    notes: currentBooking.notes || undefined,
+                }
+            });
+
+            alert(`🎉 Appointment booked successfully!\n\nAppointment ID: ${result.appointmentId}\nDate: ${result.date}\nTime: ${formatTime(result.time)}`);
+
+            // Reset
+            setBookings([createEmptyBooking()]);
+            setCurrentBookingIndex(0);
+            setCurrentStep(1);
+        } catch (err: any) {
+            console.error('Error submitting booking:', err);
+            setError(err.message || 'Failed to create appointment. Please try again.');
+            alert('Failed to create appointment. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const calculateTotal = () => {
-        return bookings.reduce((total, booking) => {
-            const service = services.find(s => s.id === booking.service);
-            return total + (service?.price || 0);
-        }, 0);
-    };
-
-    const isBookingComplete = (booking: BookingData) => {
-        const stylistComplete = booking.wantsStylist === 'no' || booking.stylist;
-        return booking.service && booking.wantsStylist && stylistComplete && booking.date && booking.time;
-    };
-
-    const completedBookings = bookings.filter(isBookingComplete);
-
-    const handleSubmit = () => {
-        console.log('=== Submitting Bookings ===');
-        completedBookings.forEach((booking, index) => {
-            console.log(`Booking ${index + 1}:`, {
-                ...booking,
-                serviceName: services.find(s => s.id === booking.service)?.name,
-                stylistName: stylists.find(s => s.id === booking.stylist)?.name,
-            });
-        });
-
-        alert(`🎉 ${completedBookings.length} appointment${completedBookings.length > 1 ? 's' : ''} booked successfully!`);
-
-        setBookings([createEmptyBooking()]);
-        setCurrentBookingIndex(0);
-        setCurrentStep(1);
-    };
-
-    const step = steps[currentStep - 1];
+    // Filter services by category
+    const filteredServices = selectedCategory === 'all'
+        ? services
+        : services.filter(s => s.category === selectedCategory);
 
     // Navigation Buttons Component
     const NavButtons = ({ showBack = true, showNext = true }: { showBack?: boolean; showNext?: boolean }) => (
@@ -263,589 +333,466 @@ export default function AppointmentSection() {
         </div>
     );
 
+    // Render step content
+    const renderStepContent = () => {
+        switch (currentStep) {
+            case 1: // Service Selection
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center mb-6">
+                            <h3 className="text-2xl font-bold text-white mb-2">Choose Your Service</h3>
+                            <p className="text-white/60">Select a service to begin your booking</p>
+                        </div>
+
+                        {/* Category Filter */}
+                        <div className="flex flex-wrap gap-2 justify-center mb-6">
+                            {serviceCategories.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategory(cat.id)}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === cat.id
+                                        ? 'bg-primary-400 text-white'
+                                        : 'bg-white/10 text-white/70 hover:bg-white/20'
+                                        }`}
+                                >
+                                    {cat.icon} {cat.name}
+                                </button>
+                            ))}
+                        </div>
+
+                        {loading ? (
+                            <div className="text-center py-8">
+                                <div className="animate-spin w-8 h-8 border-2 border-primary-400 border-t-transparent rounded-full mx-auto"></div>
+                                <p className="text-white/60 mt-2">Loading services...</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
+                                {filteredServices.map(service => (
+                                    <button
+                                        key={service.id}
+                                        onClick={() => updateCurrentBooking({ service: service.id })}
+                                        className={`p-4 rounded-xl text-left transition-all ${currentBooking.service === service.id
+                                            ? 'bg-primary-400/30 border-2 border-primary-400'
+                                            : 'bg-white/5 border-2 border-white/10 hover:border-primary-400/50'
+                                            }`}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className="font-semibold text-white">{service.name}</h4>
+                                                <p className="text-sm text-white/60">{service.duration} mins</p>
+                                            </div>
+                                            <span className="text-primary-400 font-bold">Rs {service.price}</span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <NavButtons showBack={false} />
+                    </div>
+                );
+
+            case 2: // Stylist Preference
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center mb-8">
+                            <h3 className="text-2xl font-bold text-white mb-2">Stylist Preference</h3>
+                            <p className="text-white/60">Would you like to choose a specific stylist?</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
+                            <button
+                                onClick={() => updateCurrentBooking({ wantsStylist: 'yes', stylist: '' })}
+                                className={`p-6 rounded-xl text-center transition-all ${currentBooking.wantsStylist === 'yes'
+                                    ? 'bg-primary-400/30 border-2 border-primary-400'
+                                    : 'bg-white/5 border-2 border-white/10 hover:border-primary-400/50'
+                                    }`}
+                            >
+                                <div className="text-4xl mb-3">👤</div>
+                                <h4 className="font-semibold text-white">Yes, I have a preference</h4>
+                                <p className="text-sm text-white/60 mt-1">Choose your favorite stylist</p>
+                            </button>
+
+                            <button
+                                onClick={() => updateCurrentBooking({ wantsStylist: 'no', stylist: 'any' })}
+                                className={`p-6 rounded-xl text-center transition-all ${currentBooking.wantsStylist === 'no'
+                                    ? 'bg-primary-400/30 border-2 border-primary-400'
+                                    : 'bg-white/5 border-2 border-white/10 hover:border-primary-400/50'
+                                    }`}
+                            >
+                                <div className="text-4xl mb-3">👥</div>
+                                <h4 className="font-semibold text-white">No preference</h4>
+                                <p className="text-sm text-white/60 mt-1">Show all available stylists</p>
+                            </button>
+                        </div>
+                        <NavButtons />
+                    </div>
+                );
+
+            case 3: // Stylist Selection (only for "yes" preference)
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center mb-6">
+                            <h3 className="text-2xl font-bold text-white mb-2">Select Your Stylist</h3>
+                            <p className="text-white/60">Choose from our expert team</p>
+                        </div>
+
+                        {loading ? (
+                            <div className="text-center py-8">
+                                <div className="animate-spin w-8 h-8 border-2 border-primary-400 border-t-transparent rounded-full mx-auto"></div>
+                                <p className="text-white/60 mt-2">Loading stylists...</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {stylists.map(stylist => (
+                                    <button
+                                        key={stylist.id}
+                                        onClick={() => updateCurrentBooking({ stylist: stylist.id })}
+                                        className={`p-4 rounded-xl text-center transition-all ${currentBooking.stylist === stylist.id
+                                            ? 'bg-primary-400/30 border-2 border-primary-400'
+                                            : 'bg-white/5 border-2 border-white/10 hover:border-primary-400/50'
+                                            }`}
+                                    >
+                                        <div className="text-3xl mb-2">👩‍🦰</div>
+                                        <h4 className="font-semibold text-white">{stylist.name}</h4>
+                                        <p className="text-xs text-white/60 mt-1">
+                                            {stylist.skills?.map(s => s.name).join(', ').substring(0, 30)}...
+                                        </p>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <NavButtons />
+                    </div>
+                );
+
+            case 4: // Schedule - Date & Time
+                const isNoPreference = currentBooking.wantsStylist === 'no' || currentBooking.stylist === 'any';
+
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center mb-6">
+                            <h3 className="text-2xl font-bold text-white mb-2">Select Date & Time</h3>
+                            <p className="text-white/60">
+                                {isNoPreference
+                                    ? 'Choose from all available stylists'
+                                    : 'Pick your preferred time slot'}
+                            </p>
+                        </div>
+
+                        {/* Date Picker */}
+                        <div className="max-w-md mx-auto">
+                            <label className="block text-white/80 mb-2 text-sm font-medium">Select Date</label>
+                            <input
+                                type="date"
+                                value={currentBooking.date}
+                                onChange={(e) => updateCurrentBooking({ date: e.target.value, time: '' })}
+                                min={getMinDate()}
+                                className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white focus:border-primary-400 focus:outline-none transition-all"
+                            />
+                        </div>
+
+                        {currentBooking.date && loading && (
+                            <div className="text-center py-8">
+                                <div className="animate-spin w-8 h-8 border-2 border-primary-400 border-t-transparent rounded-full mx-auto"></div>
+                                <p className="text-white/60 mt-2">Loading available slots...</p>
+                            </div>
+                        )}
+
+                        {/* NO PREFERENCE: Show consolidated time slots grid */}
+                        {currentBooking.date && isNoPreference && !loading && consolidatedSlots.length > 0 && (
+                            <div className="max-w-md mx-auto">
+                                <label className="block text-white/80 mb-2 text-sm font-medium">Select Time</label>
+                                <p className="text-xs text-primary-400 mb-3">We&apos;ll assign the best available stylist</p>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {consolidatedSlots.map(slot => (
+                                        <button
+                                            key={slot.time}
+                                            onClick={() => updateCurrentBooking({ time: slot.time })}
+                                            disabled={!slot.available}
+                                            className={`p-3 rounded-lg text-sm font-medium transition-all ${currentBooking.time === slot.time
+                                                ? 'bg-primary-400 text-white'
+                                                : slot.available
+                                                    ? 'bg-white/10 text-white/80 hover:bg-primary-400/30'
+                                                    : 'bg-red-900/20 text-red-400/50 cursor-not-allowed'
+                                                }`}
+                                            title={slot.available ? `${slot.availableStylists || 1} stylist(s) available` : slot.reason}
+                                        >
+                                            {formatTime(slot.time)}
+                                            {!slot.available && <span className="block text-[9px]">Booked</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* SPECIFIC STYLIST: Show only their slots */}
+                        {currentBooking.date && !isNoPreference && !loading && timeSlots.length > 0 && (
+                            <div className="max-w-md mx-auto">
+                                <label className="block text-white/80 mb-2 text-sm font-medium">Select Time</label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {timeSlots.map(slot => (
+                                        <button
+                                            key={slot.time}
+                                            onClick={() => updateCurrentBooking({ time: slot.time })}
+                                            disabled={!slot.available}
+                                            className={`p-3 rounded-lg text-sm font-medium transition-all ${currentBooking.time === slot.time
+                                                ? 'bg-primary-400 text-white'
+                                                : slot.available
+                                                    ? 'bg-white/10 text-white/80 hover:bg-primary-400/30'
+                                                    : 'bg-red-900/20 text-red-400/50 cursor-not-allowed'
+                                                }`}
+                                            title={slot.available ? 'Available' : slot.reason}
+                                        >
+                                            {formatTime(slot.time)}
+                                            {!slot.available && <span className="block text-[9px]">Booked</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {currentBooking.date && !loading && consolidatedSlots.length === 0 && timeSlots.length === 0 && (
+                            <div className="text-center py-8 text-white/60">
+                                No availability found for this date. Please try another date.
+                            </div>
+                        )}
+
+                        <NavButtons />
+                    </div>
+                );
+
+            case 5: // Customer Details
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center mb-6">
+                            <h3 className="text-2xl font-bold text-white mb-2">Your Details</h3>
+                            <p className="text-white/60">Enter your contact information</p>
+                        </div>
+
+                        <div className="max-w-md mx-auto space-y-4">
+                            <div>
+                                <label className="block text-white/80 mb-2 text-sm font-medium">Name *</label>
+                                <input
+                                    type="text"
+                                    value={currentBooking.name}
+                                    onChange={(e) => updateCurrentBooking({ name: e.target.value })}
+                                    placeholder="Your full name"
+                                    className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/40 focus:border-primary-400 focus:outline-none transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-white/80 mb-2 text-sm font-medium">Phone *</label>
+                                <input
+                                    type="tel"
+                                    value={currentBooking.phone}
+                                    onChange={(e) => updateCurrentBooking({ phone: e.target.value })}
+                                    placeholder="+94 77 123 4567"
+                                    className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/40 focus:border-primary-400 focus:outline-none transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-white/80 mb-2 text-sm font-medium">Email (Optional)</label>
+                                <input
+                                    type="email"
+                                    value={currentBooking.email}
+                                    onChange={(e) => updateCurrentBooking({ email: e.target.value })}
+                                    placeholder="your@email.com"
+                                    className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/40 focus:border-primary-400 focus:outline-none transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-white/80 mb-2 text-sm font-medium">Notes (Optional)</label>
+                                <textarea
+                                    value={currentBooking.notes}
+                                    onChange={(e) => updateCurrentBooking({ notes: e.target.value })}
+                                    placeholder="Any special requests..."
+                                    rows={3}
+                                    className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/40 focus:border-primary-400 focus:outline-none transition-all resize-none"
+                                />
+                            </div>
+                        </div>
+                        <NavButtons />
+                    </div>
+                );
+
+            case 6: // Confirmation
+                const isNoPreferenceConfirm = currentBooking.wantsStylist === 'no' || currentBooking.stylist === 'any';
+                const stylistName = isNoPreferenceConfirm
+                    ? 'Any Available Stylist'
+                    : (stylists.find(s => s.id === currentBooking.stylist)?.name || 'Selected Stylist');
+
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center mb-6">
+                            <h3 className="text-2xl font-bold text-white mb-2">Confirm Your Booking</h3>
+                            <p className="text-white/60">Review and submit your appointment</p>
+                        </div>
+
+                        <div className="max-w-md mx-auto bg-white/5 rounded-xl p-6 border border-white/10">
+                            <div className="space-y-4">
+                                <div className="flex justify-between">
+                                    <span className="text-white/60">Service</span>
+                                    <span className="text-white font-medium">{selectedService?.name}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-white/60">Stylist</span>
+                                    <span className="text-white font-medium">{stylistName}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-white/60">Date</span>
+                                    <span className="text-white font-medium">{currentBooking.date}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-white/60">Time</span>
+                                    <span className="text-white font-medium">{formatTime(currentBooking.time)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-white/60">Duration</span>
+                                    <span className="text-white font-medium">{selectedService?.duration} mins</span>
+                                </div>
+                                <hr className="border-white/10" />
+                                <div className="flex justify-between">
+                                    <span className="text-white/60">Customer</span>
+                                    <span className="text-white font-medium">{currentBooking.name}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-white/60">Phone</span>
+                                    <span className="text-white font-medium">{currentBooking.phone}</span>
+                                </div>
+                                <hr className="border-white/10" />
+                                <div className="flex justify-between text-lg">
+                                    <span className="text-white font-semibold">Total</span>
+                                    <span className="text-primary-400 font-bold">Rs {selectedService?.price}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {error && (
+                            <div className="max-w-md mx-auto bg-red-500/20 border border-red-500/50 rounded-xl p-4 text-red-300 text-center">
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-between gap-4 mt-6 max-w-md mx-auto">
+                            <button
+                                onClick={goBack}
+                                className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-white/20 text-white/80 hover:bg-white/10 hover:border-white/40 transition-all"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                                Back
+                            </button>
+                            <button
+                                onClick={handleSubmit}
+                                disabled={loading}
+                                className="flex items-center gap-2 px-8 py-3 rounded-full font-medium bg-gradient-to-r from-primary-400 to-primary-600 text-white shadow-[0_0_20px_rgba(116,150,116,0.4)] hover:scale-105 transition-all disabled:opacity-50"
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                        Booking...
+                                    </>
+                                ) : (
+                                    <>
+                                        Confirm Booking
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                );
+
+            default:
+                return null;
+        }
+    };
+
     return (
         <section
             ref={sectionRef}
             id="appointment"
             className="h-screen w-full bg-gradient-to-br from-primary-950 via-[#0a1a0a] to-primary-950 relative z-10 overflow-hidden"
         >
+            {/* Desktop Layout */}
+            <div className={`h-full flex ${isMobile ? 'hidden' : ''}`}>
+                {/* Left Sidebar - Steps */}
+                <div className="w-80 bg-black/40 backdrop-blur-xl border-r border-primary-400/20 p-6 flex flex-col">
+                    <h2 className="text-2xl font-bold gradient-text mb-8">Book Appointment</h2>
+
+                    <div className="flex-1">
+                        {steps.map((s, index) => (
+                            <div
+                                key={s.id}
+                                className={`flex items-center gap-4 p-4 rounded-xl mb-2 transition-all cursor-pointer ${currentStep === s.id
+                                    ? 'bg-primary-400/20 border border-primary-400/50'
+                                    : currentStep > s.id
+                                        ? 'bg-white/5 border border-white/10'
+                                        : 'opacity-50'
+                                    }`}
+                                onClick={() => currentStep > s.id && setCurrentStep(s.id)}
+                            >
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${currentStep > s.id
+                                    ? 'bg-primary-400 text-white'
+                                    : currentStep === s.id
+                                        ? 'bg-primary-400 text-white ring-2 ring-primary-400/50'
+                                        : 'bg-white/10 text-white/40'
+                                    }`}>
+                                    {currentStep > s.id ? '✓' : s.icon}
+                                </div>
+                                <div>
+                                    <p className={`font-medium ${currentStep >= s.id ? 'text-white' : 'text-white/40'}`}>
+                                        {s.title}
+                                    </p>
+                                    <p className="text-xs text-white/50">{s.subtitle}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Selected Service Info */}
+                    {selectedService && (
+                        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                            <p className="text-white/60 text-sm mb-1">Selected Service</p>
+                            <p className="text-white font-semibold">{selectedService.name}</p>
+                            <p className="text-primary-400 font-bold">Rs {selectedService.price}</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Main Content */}
+                <div className="flex-1 p-8 overflow-y-auto flex items-center justify-center">
+                    <div className="w-full max-w-3xl">
+                        {renderStepContent()}
+                    </div>
+                </div>
+            </div>
+
             {/* Mobile Layout */}
             <div className={`h-full flex flex-col ${isMobile ? '' : 'hidden'}`}>
-                {/* Mobile Top Stepper Bar */}
+                {/* Mobile Header */}
                 <div className="flex-shrink-0 bg-black/60 backdrop-blur-lg border-b border-primary-400/20 px-4 py-3">
                     <div className="flex items-center justify-between mb-2">
                         <h2 className="text-sm font-bold gradient-text">Book Appointment</h2>
                         <span className="text-white/50 text-xs">Step {currentStep}/{steps.length}</span>
                     </div>
-                    <div className="flex items-center justify-center gap-2">
-                        {steps.map((s, index) => (
-                            <div key={s.id} className="flex items-center">
-                                <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${currentStep > s.id
-                                        ? 'bg-primary-400 text-white'
-                                        : currentStep === s.id
-                                            ? 'bg-primary-400 text-white ring-2 ring-primary-400/50 ring-offset-2 ring-offset-black'
-                                            : 'bg-white/10 text-white/40'
-                                        }`}
-                                >
-                                    {currentStep > s.id ? '✓' : index + 1}
-                                </div>
-                                {index < steps.length - 1 && (
-                                    <div className={`w-4 h-0.5 mx-1 rounded-full transition-all duration-300 ${currentStep > s.id ? 'bg-primary-400' : 'bg-white/10'
-                                        }`} />
-                                )}
-                            </div>
+                    <div className="flex items-center gap-1">
+                        {steps.map(s => (
+                            <div
+                                key={s.id}
+                                className={`flex-1 h-1 rounded-full transition-all ${currentStep >= s.id ? 'bg-primary-400' : 'bg-white/20'
+                                    }`}
+                            />
                         ))}
                     </div>
-                    {bookings.length > 1 && (
-                        <div className="text-center mt-2">
-                            <span className="text-primary-400 text-xs bg-primary-400/10 px-2 py-1 rounded-full">
-                                🛒 {completedBookings.length} appointment{completedBookings.length !== 1 ? 's' : ''} in cart
-                            </span>
-                        </div>
-                    )}
                 </div>
 
-                {/* Mobile Content Area */}
-                <div className="flex-1 overflow-y-auto">
-                    {/* Step Header */}
-                    <div className="text-center pt-4 pb-3 px-4">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-2xl mb-3 shadow-[0_0_30px_rgba(116,150,116,0.5)]">
-                            {step.icon}
-                        </div>
-                        <h3 className="text-2xl font-bold text-white">{step.title}</h3>
-                        <p className="text-white/60 text-sm">{step.subtitle}</p>
-                        {bookings.length > 1 && currentStep < 5 && (
-                            <p className="text-primary-400 text-xs mt-1">Booking {currentBookingIndex + 1} of {bookings.length}</p>
-                        )}
-                    </div>
-
-                    {/* Step Content */}
-                    <div className="px-4 pb-4 flex-1 overflow-hidden flex flex-col">
-                        {/* Step 1: Services */}
-                        <div className={currentStep === 1 ? 'flex flex-col h-full' : 'hidden'}>
-                            {/* Category Tabs */}
-                            <div className="flex gap-2 overflow-x-auto pb-3 mb-3 scrollbar-hide">
-                                <button
-                                    onClick={() => setSelectedCategory('all')}
-                                    className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${selectedCategory === 'all'
-                                        ? 'bg-primary-400 text-white'
-                                        : 'bg-white/10 text-white/70 hover:bg-white/20'
-                                        }`}
-                                >
-                                    All Services
-                                </button>
-                                {serviceCategories.map((cat) => (
-                                    <button
-                                        key={cat.id}
-                                        onClick={() => setSelectedCategory(cat.id)}
-                                        className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1 ${selectedCategory === cat.id
-                                            ? 'bg-primary-400 text-white'
-                                            : 'bg-white/10 text-white/70 hover:bg-white/20'
-                                            }`}
-                                    >
-                                        <span>{cat.icon}</span>
-                                        {cat.name}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Scrollable Services Grid */}
-                            <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-                                <div className="grid grid-cols-2 gap-2">
-                                    {services
-                                        .filter(s => selectedCategory === 'all' || s.category === selectedCategory)
-                                        .map((service) => {
-                                            const categoryInfo = serviceCategories.find(c => c.id === service.category);
-                                            return (
-                                                <button
-                                                    key={service.id}
-                                                    onClick={() => updateCurrentBooking({ service: service.id })}
-                                                    className={`group relative p-3 rounded-xl border-2 transition-all duration-300 text-left overflow-hidden ${currentBooking.service === service.id
-                                                        ? 'border-primary-400 bg-primary-400/10 shadow-[0_0_15px_rgba(116,150,116,0.3)]'
-                                                        : 'border-white/10 bg-white/5 hover:border-primary-400/50'
-                                                        }`}
-                                                >
-                                                    {/* Hover Image Overlay */}
-                                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500 overflow-hidden">
-                                                        <img
-                                                            src={service.image}
-                                                            alt={service.name}
-                                                            className="w-full h-full object-cover transform scale-110 group-hover:scale-100 transition-transform duration-700"
-                                                        />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-                                                    </div>
-
-                                                    {/* Content */}
-                                                    <div className="relative z-10">
-                                                        <span className="text-xl block mb-1 group-hover:opacity-0 transition-opacity">{categoryInfo?.icon}</span>
-                                                        <h4 className="font-bold text-white text-xs group-hover:text-white">{service.name}</h4>
-                                                        <p className="text-white/50 text-[10px] group-hover:text-white/70">{service.duration}</p>
-                                                        <p className="text-primary-400 font-bold text-sm mt-1">${service.price}</p>
-                                                    </div>
-                                                </button>
-                                            );
-                                        })}
-                                </div>
-                            </div>
-                            <div className="pt-3">
-                                <NavButtons showBack={false} />
-                            </div>
-                        </div>
-
-                        {/* Step 2: Stylist Preference */}
-                        <div className={currentStep === 2 ? '' : 'hidden'}>
-                            <div className="space-y-4">
-                                <p className="text-white/80 text-center mb-4">
-                                    Are you a new customer or would you like any available stylist?
-                                </p>
-                                <div className="grid grid-cols-1 gap-3">
-                                    <button
-                                        onClick={() => updateCurrentBooking({ wantsStylist: 'yes', stylist: '' })}
-                                        className={`p-5 rounded-xl border-2 transition-all duration-300 text-left ${currentBooking.wantsStylist === 'yes'
-                                            ? 'border-primary-400 bg-primary-400/10 shadow-[0_0_15px_rgba(116,150,116,0.3)]'
-                                            : 'border-white/10 bg-white/5'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-3xl">👩‍🦰</span>
-                                            <div className="flex-1">
-                                                <h4 className="font-bold text-white text-base">Yes, I want to choose a stylist</h4>
-                                                <p className="text-white/60 text-xs">I have a preferred stylist or want to pick one</p>
-                                            </div>
-                                        </div>
-                                    </button>
-                                    <button
-                                        onClick={() => updateCurrentBooking({ wantsStylist: 'no', stylist: 'any' })}
-                                        className={`p-5 rounded-xl border-2 transition-all duration-300 text-left ${currentBooking.wantsStylist === 'no'
-                                            ? 'border-primary-400 bg-primary-400/10 shadow-[0_0_15px_rgba(116,150,116,0.3)]'
-                                            : 'border-white/10 bg-white/5'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-3xl">🎲</span>
-                                            <div className="flex-1">
-                                                <h4 className="font-bold text-white text-base">No preference</h4>
-                                                <p className="text-white/60 text-xs">I&apos;m new or any available stylist is fine</p>
-                                            </div>
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
-                            <NavButtons />
-                        </div>
-
-                        {/* Step 3: Stylists */}
-                        <div className={currentStep === 3 ? '' : 'hidden'}>
-                            <div className="grid grid-cols-1 gap-3">
-                                {stylists.map((stylist) => (
-                                    <button
-                                        key={stylist.id}
-                                        onClick={() => updateCurrentBooking({ stylist: stylist.id })}
-                                        className={`p-4 rounded-xl border-2 transition-all duration-300 ${currentBooking.stylist === stylist.id
-                                            ? 'border-primary-400 bg-primary-400/10 shadow-[0_0_15px_rgba(116,150,116,0.3)]'
-                                            : 'border-white/10 bg-white/5'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-4xl">{stylist.image}</span>
-                                            <div className="flex-1 text-left">
-                                                <h4 className="font-bold text-white text-base">{stylist.name}</h4>
-                                                <p className="text-white/60 text-xs">{stylist.specialty}</p>
-                                            </div>
-                                            <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full">
-                                                <span className="text-yellow-400 text-sm">★</span>
-                                                <span className="text-white text-sm font-medium">{stylist.rating}</span>
-                                            </div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                            <NavButtons />
-                        </div>
-
-                        {/* Step 4: Schedule */}
-                        <div className={currentStep === 4 ? '' : 'hidden'}>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-white/80 mb-2 text-sm font-medium">Select Date</label>
-                                    <input
-                                        type="date"
-                                        value={currentBooking.date}
-                                        onChange={(e) => updateCurrentBooking({ date: e.target.value })}
-                                        min={new Date().toISOString().split('T')[0]}
-                                        className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white text-base focus:border-primary-400 focus:outline-none transition-all"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-white/80 mb-2 text-sm font-medium">Select Time</label>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {timeSlots.map((time) => (
-                                            <button
-                                                key={time}
-                                                onClick={() => updateCurrentBooking({ time })}
-                                                className={`p-3 rounded-lg text-xs font-medium transition-all ${currentBooking.time === time
-                                                    ? 'bg-primary-400 text-white'
-                                                    : 'border border-white/10 bg-white/5 text-white/80'
-                                                    }`}
-                                            >
-                                                {time}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                            <NavButtons />
-                        </div>
-
-                        {/* Step 5: Details */}
-                        <div className={currentStep === 5 ? '' : 'hidden'}>
-                            <div className="space-y-3">
-                                <input type="text" value={currentBooking.name} onChange={(e) => updateCurrentBooking({ name: e.target.value })} placeholder="Full Name" className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white text-base placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all" />
-                                <input type="email" value={currentBooking.email} onChange={(e) => updateCurrentBooking({ email: e.target.value })} placeholder="Email Address" className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white text-base placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all" />
-                                <input type="tel" value={currentBooking.phone} onChange={(e) => updateCurrentBooking({ phone: e.target.value })} placeholder="Phone Number" className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white text-base placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all" />
-                                <textarea value={currentBooking.notes} onChange={(e) => updateCurrentBooking({ notes: e.target.value })} placeholder="Special requests (optional)" rows={3} className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white text-base placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all resize-none" />
-                            </div>
-                            <NavButtons />
-                        </div>
-
-                        {/* Step 6: Confirm */}
-                        <div className={currentStep === 6 ? '' : 'hidden'}>
-                            <div className="space-y-4">
-                                {completedBookings.map((booking, index) => {
-                                    const service = services.find(s => s.id === booking.service);
-                                    const stylist = stylists.find(s => s.id === booking.stylist);
-                                    const stylistDisplay = booking.wantsStylist === 'no' ? 'Any Available Stylist' : stylist?.name;
-                                    const categoryInfo = serviceCategories.find(c => c.id === service?.category);
-                                    return (
-                                        <div key={booking.id} className="bg-white/5 rounded-xl p-3 border border-white/10 relative">
-                                            {bookings.length > 1 && (
-                                                <button onClick={() => removeBooking(index)} className="absolute top-2 right-2 w-6 h-6 bg-red-500/20 hover:bg-red-500/40 rounded-full flex items-center justify-center text-red-400 text-xs transition-colors">✕</button>
-                                            )}
-                                            <div className="flex items-start gap-3">
-                                                <span className="text-2xl">{categoryInfo?.icon}</span>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="font-bold text-white text-sm">{service?.name}</h4>
-                                                    <p className="text-white/50 text-xs">with {stylistDisplay}</p>
-                                                    <p className="text-white/50 text-xs">{booking.date} • {booking.time}</p>
-                                                </div>
-                                                <span className="text-primary-400 font-bold">${service?.price}</span>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-
-                                <button onClick={addAnotherBooking} className="w-full py-3 rounded-xl border-2 border-dashed border-primary-400/50 text-primary-400 font-medium hover:bg-primary-400/10 transition-all flex items-center justify-center gap-2">
-                                    <span className="text-xl">+</span> Add Another
-                                </button>
-
-                                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-                                    <p className="text-white/50 text-xs mb-1">Customer</p>
-                                    <p className="text-white font-medium text-sm">{bookings[0]?.name || '-'}</p>
-                                    <p className="text-white/60 text-xs">{bookings[0]?.email} • {bookings[0]?.phone}</p>
-                                </div>
-
-                                <div className="flex justify-between items-center py-3 border-t border-white/10">
-                                    <span className="text-white/60">Total ({completedBookings.length})</span>
-                                    <span className="text-primary-400 font-bold text-2xl">${calculateTotal()}</span>
-                                </div>
-
-                                {/* Back and Submit buttons */}
-                                <div className="flex gap-3">
-                                    <button onClick={goBack} className="flex-1 py-3 rounded-full border-2 border-white/20 text-white/80 hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                                        Back
-                                    </button>
-                                    <button onClick={handleSubmit} disabled={completedBookings.length === 0} className="flex-[2] py-3 rounded-full font-bold text-base bg-gradient-to-r from-primary-400 to-primary-600 text-white shadow-[0_0_30px_rgba(116,150,116,0.5)] active:scale-95 transition-all disabled:opacity-50">
-                                        ✓ Confirm
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex-shrink-0 py-2 text-center bg-black/40">
-                    <p className="text-white/30 text-[10px]">↓ Scroll to continue ↓</p>
-                </div>
-            </div>
-
-            {/* Desktop Layout */}
-            <div className={`h-full w-full flex ${isMobile ? 'hidden' : ''}`}>
-                {/* Desktop Stepper */}
-                <div className="w-64 xl:w-80 h-full flex items-center justify-center bg-black/20">
-                    <div className="relative flex flex-col justify-center items-center h-[60vh] py-8">
-                        <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1 bg-white/10 rounded-full" />
-                        <div
-                            className="absolute left-1/2 -translate-x-1/2 top-0 w-1 rounded-full transition-all duration-500"
-                            style={{
-                                height: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
-                                background: 'linear-gradient(180deg, #749674, #567856)',
-                                boxShadow: '0 0 15px #749674',
-                            }}
-                        />
-                        <div className="flex flex-col justify-between h-full">
-                            {steps.map((s) => (
-                                <div key={s.id} className="relative z-10 flex items-center gap-4">
-                                    <div className={`w-12 h-12 xl:w-14 xl:h-14 rounded-full flex items-center justify-center text-lg xl:text-xl transition-all duration-500 ${currentStep > s.id ? 'bg-primary-400 text-white shadow-[0_0_15px_rgba(116,150,116,0.5)]'
-                                        : currentStep === s.id ? 'bg-primary-400 text-white scale-110 shadow-[0_0_25px_#749674]'
-                                            : 'bg-white/10 text-white/40'
-                                        }`}>
-                                        {currentStep > s.id ? '✓' : s.icon}
-                                    </div>
-                                    <div className={`transition-opacity duration-300 ${currentStep >= s.id ? 'opacity-100' : 'opacity-40'}`}>
-                                        <p className="text-white font-bold text-sm xl:text-base">{s.title}</p>
-                                        <p className="text-white/50 text-xs">{s.subtitle}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Desktop Content */}
-                <div className="flex-1 flex items-center justify-center px-12 py-4 overflow-hidden">
-                    <div className="w-full max-w-4xl h-full flex flex-col">
-                        {/* Step 1 */}
-                        <div className={currentStep === 1 ? 'animate-fade-in-up flex flex-col h-full' : 'hidden'}>
-                            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-2 text-center">Choose Your Service</h3>
-                            <p className="text-white/60 mb-4 text-center">Select the perfect treatment</p>
-
-                            {/* Category Tabs */}
-                            <div className="flex justify-center gap-3 mb-4">
-                                <button
-                                    onClick={() => setSelectedCategory('all')}
-                                    className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${selectedCategory === 'all'
-                                        ? 'bg-primary-400 text-white shadow-[0_0_15px_rgba(116,150,116,0.4)]'
-                                        : 'bg-white/10 text-white/70 hover:bg-white/20'
-                                        }`}
-                                >
-                                    All
-                                </button>
-                                {serviceCategories.map((cat) => (
-                                    <button
-                                        key={cat.id}
-                                        onClick={() => setSelectedCategory(cat.id)}
-                                        className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${selectedCategory === cat.id
-                                            ? 'bg-primary-400 text-white shadow-[0_0_15px_rgba(116,150,116,0.4)]'
-                                            : 'bg-white/10 text-white/70 hover:bg-white/20'
-                                            }`}
-                                    >
-                                        <span>{cat.icon}</span>
-                                        {cat.name}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Scrollable Services Grid */}
-                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                                <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {services
-                                        .filter(s => selectedCategory === 'all' || s.category === selectedCategory)
-                                        .map((service) => {
-                                            const categoryInfo = serviceCategories.find(c => c.id === service.category);
-                                            return (
-                                                <button
-                                                    key={service.id}
-                                                    onClick={() => updateCurrentBooking({ service: service.id })}
-                                                    className={`group relative p-5 rounded-xl border-2 transition-all duration-300 text-left overflow-hidden h-[140px] ${currentBooking.service === service.id
-                                                        ? 'border-primary-400 bg-primary-400/20 shadow-[0_0_20px_rgba(116,150,116,0.4)]'
-                                                        : 'border-white/10 bg-white/5 hover:border-primary-400/50'}`}
-                                                >
-                                                    {/* Hover Image Overlay */}
-                                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500 overflow-hidden">
-                                                        <img
-                                                            src={service.image}
-                                                            alt={service.name}
-                                                            className="w-full h-full object-cover transform translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-out"
-                                                        />
-                                                        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-transparent" />
-                                                    </div>
-
-                                                    {/* Content */}
-                                                    <div className="relative z-10 h-full flex flex-col">
-                                                        <span className="text-2xl mb-2 group-hover:opacity-0 transition-opacity">{categoryInfo?.icon}</span>
-                                                        <h4 className="font-bold text-white text-sm group-hover:text-white">{service.name}</h4>
-                                                        <p className="text-white/60 text-xs group-hover:text-white/80">{service.duration}</p>
-                                                        <p className="text-primary-400 font-bold mt-auto text-lg">${service.price}</p>
-                                                    </div>
-                                                </button>
-                                            );
-                                        })}
-                                </div>
-                            </div>
-                            <div className="pt-4">
-                                <NavButtons showBack={false} />
-                            </div>
-                        </div>
-
-                        {/* Step 2 - Preference */}
-                        <div className={currentStep === 2 ? 'animate-fade-in-up flex flex-col items-center justify-center h-full' : 'hidden'}>
-                            <div className="text-center">
-                                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">Stylist Preference</h3>
-                                <p className="text-white/60 mb-6">Would you like to choose a specific stylist?</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-6 max-w-2xl">
-                                <button
-                                    onClick={() => updateCurrentBooking({ wantsStylist: 'yes', stylist: '' })}
-                                    className={`p-8 rounded-xl border-2 transition-all duration-300 text-center ${currentBooking.wantsStylist === 'yes' ? 'border-primary-400 bg-primary-400/20' : 'border-white/10 bg-white/5 hover:border-primary-400/50'}`}
-                                >
-                                    <span className="text-5xl block mb-4">👩‍🦰</span>
-                                    <h4 className="font-bold text-white text-xl mb-2">Yes, I&apos;ll choose</h4>
-                                    <p className="text-white/60 text-sm">I have a preferred stylist or want to select one</p>
-                                </button>
-                                <button
-                                    onClick={() => updateCurrentBooking({ wantsStylist: 'no', stylist: 'any' })}
-                                    className={`p-8 rounded-xl border-2 transition-all duration-300 text-center ${currentBooking.wantsStylist === 'no' ? 'border-primary-400 bg-primary-400/20' : 'border-white/10 bg-white/5 hover:border-primary-400/50'}`}
-                                >
-                                    <span className="text-5xl block mb-4">🎲</span>
-                                    <h4 className="font-bold text-white text-xl mb-2">No preference</h4>
-                                    <p className="text-white/60 text-sm">I&apos;m new or any available stylist is fine</p>
-                                </button>
-                            </div>
-                            <div className="mt-6">
-                                <NavButtons />
-                            </div>
-                        </div>
-
-                        {/* Step 3 - Stylists */}
-                        <div className={currentStep === 3 ? 'animate-fade-in-up flex flex-col items-center justify-center h-full' : 'hidden'}>
-                            <div className="text-center">
-                                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">Select Your Stylist</h3>
-                                <p className="text-white/60 mb-6">Choose from our experts</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 max-w-2xl">
-                                {stylists.map((stylist) => (
-                                    <button key={stylist.id} onClick={() => updateCurrentBooking({ stylist: stylist.id })} className={`p-6 rounded-xl border-2 transition-all duration-300 text-left ${currentBooking.stylist === stylist.id ? 'border-primary-400 bg-primary-400/20' : 'border-white/10 bg-white/5 hover:border-primary-400/50'}`}>
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-5xl">{stylist.image}</span>
-                                            <div>
-                                                <h4 className="font-bold text-white text-lg">{stylist.name}</h4>
-                                                <p className="text-white/60 text-sm">{stylist.specialty}</p>
-                                                <div className="flex items-center gap-1 mt-1"><span className="text-yellow-400">★</span><span className="text-white font-medium">{stylist.rating}</span></div>
-                                            </div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="mt-6">
-                                <NavButtons />
-                            </div>
-                        </div>
-
-                        {/* Step 4 - Schedule */}
-                        <div className={currentStep === 4 ? 'animate-fade-in-up flex flex-col items-center justify-center h-full' : 'hidden'}>
-                            <div className="text-center">
-                                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">Pick Date & Time</h3>
-                                <p className="text-white/60 mb-6">Choose your slot</p>
-                            </div>
-                            <div className="space-y-6 w-full max-w-lg">
-                                <div>
-                                    <label className="block text-white/80 mb-2 font-medium">Select Date</label>
-                                    <input type="date" value={currentBooking.date} onChange={(e) => updateCurrentBooking({ date: e.target.value })} min={new Date().toISOString().split('T')[0]} className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white focus:border-primary-400 focus:outline-none transition-all" />
-                                </div>
-                                <div>
-                                    <label className="block text-white/80 mb-2 font-medium">Select Time</label>
-                                    <div className="grid grid-cols-4 gap-3">
-                                        {timeSlots.map((time) => (
-                                            <button key={time} onClick={() => updateCurrentBooking({ time })} className={`p-3 rounded-lg text-sm font-medium transition-all ${currentBooking.time === time ? 'bg-primary-400 text-white' : 'border border-white/10 bg-white/5 text-white/80 hover:border-primary-400/50'}`}>{time}</button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="mt-6">
-                                <NavButtons />
-                            </div>
-                        </div>
-
-                        {/* Step 5 - Details */}
-                        <div className={currentStep === 5 ? 'animate-fade-in-up flex flex-col items-center justify-center h-full' : 'hidden'}>
-                            <div className="text-center">
-                                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">Your Details</h3>
-                                <p className="text-white/60 mb-6">Tell us about you</p>
-                            </div>
-                            <div className="space-y-4 w-full max-w-md">
-                                <input type="text" value={currentBooking.name} onChange={(e) => updateCurrentBooking({ name: e.target.value })} placeholder="Full Name" className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all" />
-                                <input type="email" value={currentBooking.email} onChange={(e) => updateCurrentBooking({ email: e.target.value })} placeholder="Email Address" className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all" />
-                                <input type="tel" value={currentBooking.phone} onChange={(e) => updateCurrentBooking({ phone: e.target.value })} placeholder="Phone Number" className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all" />
-                                <textarea value={currentBooking.notes} onChange={(e) => updateCurrentBooking({ notes: e.target.value })} placeholder="Special requests" rows={3} className="w-full p-4 rounded-xl bg-white/5 border-2 border-white/10 text-white placeholder-white/30 focus:border-primary-400 focus:outline-none transition-all resize-none" />
-                            </div>
-                            <div className="mt-6">
-                                <NavButtons />
-                            </div>
-                        </div>
-
-                        {/* Step 6 - Confirm */}
-                        <div className={currentStep === 6 ? 'animate-fade-in-up flex flex-col items-center justify-center h-full' : 'hidden'}>
-                            <div className="text-center">
-                                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">Review Your Bookings</h3>
-                                <p className="text-white/60 mb-6">{completedBookings.length} appointment{completedBookings.length !== 1 ? 's' : ''} to confirm</p>
-                            </div>
-                            <div className="w-full max-w-2xl">
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                    {completedBookings.map((booking, index) => {
-                                        const service = services.find(s => s.id === booking.service);
-                                        const stylist = stylists.find(s => s.id === booking.stylist);
-                                        const stylistDisplay = booking.wantsStylist === 'no' ? 'Any Available Stylist' : stylist?.name;
-                                        const categoryInfo = serviceCategories.find(c => c.id === service?.category);
-                                        return (
-                                            <div key={booking.id} className="bg-white/5 rounded-xl p-4 border border-white/10 relative">
-                                                {completedBookings.length > 1 && (
-                                                    <button onClick={() => removeBooking(index)} className="absolute top-3 right-3 w-6 h-6 bg-red-500/20 hover:bg-red-500/40 rounded-full flex items-center justify-center text-red-400 text-xs transition-colors">✕</button>
-                                                )}
-                                                <div className="flex items-center gap-3 mb-3">
-                                                    <span className="text-3xl">{categoryInfo?.icon}</span>
-                                                    <div><h4 className="font-bold text-white">{service?.name}</h4><p className="text-white/50 text-sm">with {stylistDisplay}</p></div>
-                                                </div>
-                                                <div className="text-white/60 text-sm space-y-1"><p>📅 {booking.date}</p><p>🕐 {booking.time}</p></div>
-                                                <p className="text-primary-400 font-bold text-xl mt-3">${service?.price}</p>
-                                            </div>
-                                        );
-                                    })}
-
-                                    <button onClick={addAnotherBooking} className="border-2 border-dashed border-primary-400/40 rounded-xl p-6 flex flex-col items-center justify-center gap-2 hover:bg-primary-400/10 hover:border-primary-400 transition-all group min-h-[180px]">
-                                        <span className="text-4xl text-primary-400/60 group-hover:text-primary-400 transition-colors">+</span>
-                                        <span className="text-primary-400/60 group-hover:text-primary-400 font-medium transition-colors">Add Another</span>
-                                    </button>
-                                </div>
-
-                                <div className="bg-white/5 rounded-xl p-4 border border-white/10 mb-6">
-                                    <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/10"><span className="text-white/60">Customer</span><span className="text-white font-medium">{bookings[0]?.name} • {bookings[0]?.email}</span></div>
-                                    <div className="flex justify-between items-center"><span className="text-white/60">Total</span><span className="text-primary-400 font-bold text-3xl">${calculateTotal()}</span></div>
-                                </div>
-
-                                <div className="flex gap-4">
-                                    <button onClick={goBack} className="flex-1 py-4 rounded-full border-2 border-white/20 text-white/80 hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                                        Back
-                                    </button>
-                                    <button onClick={handleSubmit} disabled={completedBookings.length === 0} className="flex-[2] py-4 rounded-full font-bold bg-gradient-to-r from-primary-400 to-primary-600 text-white shadow-[0_0_20px_rgba(116,150,116,0.4)] hover:scale-105 transition-all disabled:opacity-50">
-                                        Confirm {completedBookings.length > 1 ? `All ${completedBookings.length} Bookings` : 'Booking'} ✓
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-6 text-center">
-                            <p className="text-white/30 text-xs">Scroll to navigate steps</p>
-                            <div className="mt-1 animate-bounce">
-                                <svg className="w-4 h-4 mx-auto text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Desktop overlays */}
-                <div className="absolute top-6 right-8 z-40">
-                    <h2 className="text-xl font-bold gradient-text">Book Appointment</h2>
-                    {bookings.length > 1 && <p className="text-primary-400 text-xs mt-1">🛒 {completedBookings.length} in cart</p>}
-                </div>
-                <div className="absolute bottom-6 right-6 z-40">
-                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 px-3 py-1.5 rounded-full text-sm">
-                        <span className="text-primary-400 font-bold">{currentStep}</span>
-                        <span className="text-white/40"> / {steps.length}</span>
-                    </div>
+                {/* Mobile Content */}
+                <div className="flex-1 overflow-y-auto p-4">
+                    {renderStepContent()}
                 </div>
             </div>
         </section>
