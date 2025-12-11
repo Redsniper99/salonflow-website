@@ -1,7 +1,7 @@
 // API Service Layer for SalonFlow Backend
 // This connects to the management system's public API endpoints
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/public').replace(/\/$/, '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/public').replace(/\/$/, '');
 
 // Enable demo mode when backend is not available
 let DEMO_MODE = false;
