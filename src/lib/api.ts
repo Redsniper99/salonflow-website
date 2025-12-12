@@ -1,12 +1,12 @@
-// API Service Layer for SalonFlow Backend
-// This connects to the management system's public API endpoints
+// API Service Layer for SalonFlow Website
+// Direct Supabase queries for public booking functionality
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/public').replace(/\/$/, '');
+import { supabase, DbService, DbStaff, DbStylistBreak, DbStylistUnavailability, DbSalonSettings } from './supabase';
 
-// Enable demo mode when backend is not available
-let DEMO_MODE = false;
+// ============================================
+// PUBLIC TYPES
+// ============================================
 
-// Types matching API responses
 export interface Service {
     id: string;
     name: string;
@@ -31,46 +31,6 @@ export interface TimeSlot {
     reason?: string;
 }
 
-// Raw slot from API (might have different property names or types)
-interface RawTimeSlot {
-    time: string;
-    available?: boolean | string | number;
-    isAvailable?: boolean | string | number;
-    reason?: string;
-    status?: string;
-}
-
-// Normalize a single slot to ensure `available` is a proper boolean
-function normalizeSlot(slot: RawTimeSlot): TimeSlot {
-    // Check for different property names the backend might use
-    let isAvailable: boolean;
-
-    if (typeof slot.available !== 'undefined') {
-        // Handle string "true"/"false", numbers 0/1, or actual booleans
-        isAvailable = slot.available === true || slot.available === 'true' || slot.available === 1;
-    } else if (typeof slot.isAvailable !== 'undefined') {
-        isAvailable = slot.isAvailable === true || slot.isAvailable === 'true' || slot.isAvailable === 1;
-    } else if (slot.status) {
-        // If backend uses status field
-        isAvailable = slot.status.toLowerCase() === 'available';
-    } else {
-        // Default to true if no availability info
-        isAvailable = true;
-    }
-
-    return {
-        time: slot.time,
-        available: isAvailable,
-        reason: !isAvailable ? (slot.reason || 'Already booked') : undefined,
-    };
-}
-
-// Normalize an array of slots
-function normalizeSlots(slots: RawTimeSlot[]): TimeSlot[] {
-    if (!Array.isArray(slots)) return [];
-    return slots.map(normalizeSlot);
-}
-
 export interface StylistWithSlots {
     stylist: Stylist;
     skills: { id: string; name: string; category: string }[];
@@ -78,7 +38,6 @@ export interface StylistWithSlots {
     availableCount: number;
 }
 
-// Consolidated availability response (merged grid for "No Preference")
 export interface ConsolidatedSlot {
     time: string;
     available: boolean;
@@ -109,142 +68,250 @@ export interface BookingRequest {
     };
 }
 
-// Demo data for testing when backend is not running
-const DEMO_SERVICES: Service[] = [
-    { id: 'haircut', name: 'Haircut & Styling', category: 'Hair', price: 1500, duration: 45, gender: 'Unisex' },
-    { id: 'coloring', name: 'Hair Coloring', category: 'Hair', price: 3500, duration: 120, gender: 'Unisex' },
-    { id: 'highlights', name: 'Hair Highlights', category: 'Hair', price: 4500, duration: 150, gender: 'Unisex' },
-    { id: 'facial', name: 'Facial Treatment', category: 'Spa', price: 2500, duration: 60, gender: 'Unisex' },
-    { id: 'massage', name: 'Body Massage', category: 'Spa', price: 3000, duration: 90, gender: 'Unisex' },
-    { id: 'manicure', name: 'Manicure', category: 'Nails', price: 1000, duration: 45, gender: 'Female' },
-    { id: 'pedicure', name: 'Pedicure', category: 'Nails', price: 1200, duration: 60, gender: 'Female' },
-    { id: 'bridal', name: 'Bridal Package', category: 'Bridal', price: 25000, duration: 240, gender: 'Female' },
-];
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
 
-const DEMO_STYLISTS: Stylist[] = [
-    { id: 'sarah', name: 'Sarah Johnson', workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], workingHours: { start: '09:00', end: '18:00' }, skills: [{ id: 'haircut', name: 'Haircut', category: 'Hair' }, { id: 'coloring', name: 'Hair Coloring', category: 'Hair' }] },
-    { id: 'emma', name: 'Emma Wilson', workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], workingHours: { start: '10:00', end: '19:00' }, skills: [{ id: 'haircut', name: 'Haircut', category: 'Hair' }] },
-    { id: 'james', name: 'James Chen', workingDays: ['Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], workingHours: { start: '09:00', end: '17:00' }, skills: [{ id: 'haircut', name: 'Haircut', category: 'Hair' }] },
-    { id: 'sofia', name: 'Sofia Garcia', workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], workingHours: { start: '09:00', end: '18:00' }, skills: [{ id: 'facial', name: 'Facial', category: 'Spa' }] },
-];
+/**
+ * Get salon settings (slot interval, working hours, etc.)
+ */
+async function getSalonSettings(): Promise<DbSalonSettings> {
+    const { data, error } = await supabase
+        .from('salon_settings')
+        .select('*')
+        .limit(1)
+        .single();
 
-function generateDemoTimeSlots(): TimeSlot[] {
-    const slots: TimeSlot[] = [];
-    for (let hour = 9; hour <= 17; hour++) {
-        const isBooked = Math.random() > 0.7;
-        slots.push({
-            time: `${hour.toString().padStart(2, '0')}:00`,
-            available: !isBooked,
-            reason: isBooked ? 'Already booked' : undefined,
-        });
-        if (hour < 17) {
-            const isBooked30 = Math.random() > 0.7;
-            slots.push({
-                time: `${hour.toString().padStart(2, '0')}:30`,
-                available: !isBooked30,
-                reason: isBooked30 ? 'Already booked' : undefined,
-            });
-        }
+    if (error || !data) {
+        // Return defaults if no settings found
+        return {
+            id: 'default',
+            slot_interval: 30,
+            booking_window_days: 30,
+            booking_buffer_minutes: 10,
+            default_start_time: '09:00',
+            default_end_time: '18:00',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        };
     }
+
+    return data as DbSalonSettings;
+}
+
+/**
+ * Generate time slots based on salon settings and stylist working hours
+ */
+function generateTimeSlots(
+    startTime: string,
+    endTime: string,
+    slotInterval: number
+): string[] {
+    const slots: string[] = [];
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+
+    let currentMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+
+    while (currentMinutes < endMinutes) {
+        const hours = Math.floor(currentMinutes / 60);
+        const mins = currentMinutes % 60;
+        slots.push(`${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`);
+        currentMinutes += slotInterval;
+    }
+
     return slots;
 }
 
-// API helper function with error handling
-async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    if (DEMO_MODE) {
-        throw new Error('DEMO_MODE');
-    }
+/**
+ * Check if a time slot is within a break period
+ */
+function isInBreak(
+    slotTime: string,
+    breaks: DbStylistBreak[],
+    dayOfWeek: number
+): boolean {
+    const [slotHour, slotMin] = slotTime.split(':').map(Number);
+    const slotMinutes = slotHour * 60 + slotMin;
 
-    try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options?.headers,
-            },
-        });
-
-        if (!response.ok) {
-            console.warn(`⚠️ Backend returned ${response.status}. Switching to DEMO MODE.`);
-            DEMO_MODE = true;
-            throw new Error('DEMO_MODE');
+    return breaks.some(brk => {
+        // Check if break applies to this day
+        if (brk.day_of_week !== null && brk.day_of_week !== dayOfWeek) {
+            return false;
         }
 
-        const data = await response.json();
+        const [breakStartHour, breakStartMin] = brk.start_time.split(':').map(Number);
+        const [breakEndHour, breakEndMin] = brk.end_time.split(':').map(Number);
+        const breakStartMinutes = breakStartHour * 60 + breakStartMin;
+        const breakEndMinutes = breakEndHour * 60 + breakEndMin;
 
-        if (!data.success) {
-            console.warn('⚠️ Backend returned success:false. Switching to DEMO MODE.');
-            DEMO_MODE = true;
-            throw new Error('DEMO_MODE');
-        }
+        return slotMinutes >= breakStartMinutes && slotMinutes < breakEndMinutes;
+    });
+}
 
-        return data;
-    } catch (err: any) {
-        if (err.message === 'DEMO_MODE') {
-            throw err;
-        }
-        if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-            console.warn('⚠️ Backend API not available. Switching to DEMO MODE.');
-            DEMO_MODE = true;
-            throw new Error('DEMO_MODE');
-        }
-        // Any other error also triggers demo mode
-        console.warn('⚠️ Backend error:', err.message, '. Switching to DEMO MODE.');
-        DEMO_MODE = true;
-        throw new Error('DEMO_MODE');
-    }
+/**
+ * Check if an appointment overlaps with a time slot
+ */
+function isSlotBooked(
+    slotTime: string,
+    serviceDuration: number,
+    appointments: { start_time: string; duration: number }[]
+): boolean {
+    const [slotHour, slotMin] = slotTime.split(':').map(Number);
+    const slotStartMinutes = slotHour * 60 + slotMin;
+    const slotEndMinutes = slotStartMinutes + serviceDuration;
+
+    return appointments.some(apt => {
+        const [aptHour, aptMin] = apt.start_time.split(':').map(Number);
+        const aptStartMinutes = aptHour * 60 + aptMin;
+        const aptEndMinutes = aptStartMinutes + apt.duration;
+
+        // Check for overlap: slot overlaps if it starts before apt ends AND ends after apt starts
+        return slotStartMinutes < aptEndMinutes && slotEndMinutes > aptStartMinutes;
+    });
+}
+
+/**
+ * Convert database service to API service format
+ */
+function mapDbServiceToService(dbService: DbService): Service {
+    return {
+        id: dbService.id,
+        name: dbService.name,
+        description: dbService.description || undefined,
+        category: dbService.category,
+        price: dbService.price,
+        duration: dbService.duration,
+        gender: dbService.gender || 'Unisex',
+    };
+}
+
+/**
+ * Convert database staff to stylist format
+ */
+function mapDbStaffToStylist(dbStaff: DbStaff, services: DbService[]): Stylist {
+    // Map specialization IDs to skill objects
+    const skills = (dbStaff.specializations || [])
+        .map(serviceId => {
+            const service = services.find(s => s.id === serviceId);
+            return service ? { id: service.id, name: service.name, category: service.category as string } : null;
+        })
+        .filter((s): s is { id: string; name: string; category: string } => s !== null);
+
+    return {
+        id: dbStaff.id,
+        name: dbStaff.name,
+        workingDays: dbStaff.working_days || [],
+        workingHours: dbStaff.working_hours || { start: '09:00', end: '18:00' },
+        skills,
+    };
 }
 
 // ============================================
-// API FUNCTIONS (with demo fallback)
+// API FUNCTIONS
 // ============================================
 
 /**
  * Get all active services
  */
 export async function fetchServices(category?: string, gender?: string): Promise<Service[]> {
-    try {
-        const params = new URLSearchParams();
-        if (category) params.append('category', category);
-        if (gender) params.append('gender', gender);
+    console.log('📦 Fetching services from Supabase...');
 
-        const queryString = params.toString();
-        const url = `/services${queryString ? `?${queryString}` : ''}`;
+    let query = supabase
+        .from('services')
+        .select('*')
+        .eq('is_active', true)
+        .order('category')
+        .order('name');
 
-        console.log('📦 Fetching services from backend...');
-        const response = await apiCall<{ data: Service[]; grouped: Record<string, Service[]> }>(url);
-        console.log(`✅ Loaded ${response.data?.length || 0} services`);
-
-        return response.data || [];
-    } catch (err: any) {
-        if (err.message === 'DEMO_MODE') {
-            console.log('📦 Using DEMO services');
-            return DEMO_SERVICES;
-        }
-        throw err;
+    if (category) {
+        query = query.eq('category', category);
     }
+
+    if (gender && gender !== 'Unisex') {
+        query = query.or(`gender.eq.${gender},gender.eq.Unisex`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+        console.error('❌ Error fetching services:', error);
+        throw new Error(`Failed to fetch services: ${error.message}`);
+    }
+
+    const services = (data as DbService[]).map(mapDbServiceToService);
+    console.log(`✅ Loaded ${services.length} services`);
+
+    return services;
 }
 
 /**
  * Get stylists who can perform a specific service
  */
 export async function fetchStylistsForService(serviceId: string, date?: string): Promise<Stylist[]> {
-    try {
-        const params = new URLSearchParams({ service_id: serviceId });
-        if (date) params.append('date', date);
+    console.log('👥 Fetching stylists for service:', serviceId);
 
-        console.log('👥 Fetching stylists for service:', serviceId);
-        const response = await apiCall<{ data: Stylist[] }>(`/stylists?${params}`);
-        console.log(`✅ Loaded ${response.data?.length || 0} stylists`);
+    // Get all active stylists
+    const { data: staffData, error: staffError } = await supabase
+        .from('staff')
+        .select('*')
+        .eq('is_active', true)
+        .eq('role', 'Stylist')
+        .eq('is_emergency_unavailable', false);
 
-        return response.data || [];
-    } catch (err: any) {
-        if (err.message === 'DEMO_MODE') {
-            console.log('👥 Using DEMO stylists');
-            return DEMO_STYLISTS;
-        }
-        throw err;
+    if (staffError) {
+        console.error('❌ Error fetching stylists:', staffError);
+        throw new Error(`Failed to fetch stylists: ${staffError.message}`);
     }
+
+    // Get all services for mapping skills
+    const { data: servicesData, error: servicesError } = await supabase
+        .from('services')
+        .select('*')
+        .eq('is_active', true);
+
+    if (servicesError) {
+        console.error('❌ Error fetching services:', servicesError);
+        throw new Error(`Failed to fetch services: ${servicesError.message}`);
+    }
+
+    const services = servicesData as DbService[];
+
+    // Filter stylists who have the service in their specializations
+    const qualifiedStaff = (staffData as DbStaff[]).filter(staff =>
+        staff.specializations && staff.specializations.includes(serviceId)
+    );
+
+    // If a date is provided, filter out unavailable stylists
+    if (date) {
+        const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+
+        const { data: unavailabilityData } = await supabase
+            .from('stylist_unavailability')
+            .select('stylist_id')
+            .eq('unavailable_date', date);
+
+        const unavailableIds = new Set((unavailabilityData || []).map(u => u.stylist_id));
+
+        const availableStaff = qualifiedStaff.filter(staff => {
+            // Check if working on this day
+            if (!staff.working_days?.includes(dayOfWeek)) {
+                return false;
+            }
+            // Check if not on unavailability list
+            return !unavailableIds.has(staff.id);
+        });
+
+        const stylists = availableStaff.map(staff => mapDbStaffToStylist(staff, services));
+        console.log(`✅ Loaded ${stylists.length} stylists for service`);
+        return stylists;
+    }
+
+    const stylists = qualifiedStaff.map(staff => mapDbStaffToStylist(staff, services));
+    console.log(`✅ Loaded ${stylists.length} stylists for service`);
+
+    return stylists;
 }
 
 /**
@@ -255,169 +322,229 @@ export async function fetchTimeSlots(
     date: string,
     duration: number
 ): Promise<TimeSlot[]> {
-    try {
-        const params = new URLSearchParams({
-            stylist_id: stylistId,
-            date,
-            duration: duration.toString(),
-        });
+    console.log('🕐 Fetching time slots:', { stylistId, date, duration });
 
-        console.log('🕐 Fetching time slots:', { stylistId, date, duration });
-        const response = await apiCall<{ data: RawTimeSlot[]; availableCount: number }>(`/availability?${params}`);
+    // Get salon settings
+    const settings = await getSalonSettings();
 
-        // Normalize slots to ensure proper boolean handling
-        const normalizedSlots = normalizeSlots(response.data || []);
-        console.log(`✅ Loaded ${normalizedSlots.length} slots (${normalizedSlots.filter(s => !s.available).length} booked)`);
+    // Get stylist info
+    const { data: stylistData, error: stylistError } = await supabase
+        .from('staff')
+        .select('*')
+        .eq('id', stylistId)
+        .single();
 
-        return normalizedSlots;
-    } catch (err: any) {
-        if (err.message === 'DEMO_MODE') {
-            console.log('🕐 Using DEMO time slots');
-            return generateDemoTimeSlots();
-        }
-        throw err;
+    if (stylistError || !stylistData) {
+        console.error('❌ Error fetching stylist:', stylistError);
+        throw new Error('Stylist not found');
     }
+
+    const stylist = stylistData as DbStaff;
+    const workingHours = stylist.working_hours || {
+        start: settings.default_start_time,
+        end: settings.default_end_time,
+    };
+
+    // Get day of week (0 = Sunday, 1 = Monday, etc.)
+    const dateObj = new Date(date);
+    const dayOfWeek = dateObj.getDay();
+    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+
+    // Check if stylist works on this day
+    if (!stylist.working_days?.includes(dayName)) {
+        console.log(`⚠️ Stylist doesn't work on ${dayName}`);
+        return [];
+    }
+
+    // Check for unavailability
+    const { data: unavailData } = await supabase
+        .from('stylist_unavailability')
+        .select('*')
+        .eq('stylist_id', stylistId)
+        .eq('unavailable_date', date);
+
+    if (unavailData && unavailData.length > 0) {
+        console.log(`⚠️ Stylist is unavailable on ${date}`);
+        return [];
+    }
+
+    // Get stylist breaks
+    const { data: breaksData } = await supabase
+        .from('stylist_breaks')
+        .select('*')
+        .eq('stylist_id', stylistId);
+
+    const breaks = (breaksData || []) as DbStylistBreak[];
+
+    // Get existing appointments for this stylist on this date
+    const { data: appointmentsData } = await supabase
+        .from('appointments')
+        .select('start_time, duration, status')
+        .eq('stylist_id', stylistId)
+        .eq('appointment_date', date)
+        .not('status', 'in', '("Cancelled","NoShow")');
+
+    const appointments = (appointmentsData || []) as { start_time: string; duration: number }[];
+
+    // Generate all time slots
+    const allSlots = generateTimeSlots(workingHours.start, workingHours.end, settings.slot_interval);
+
+    // Map to TimeSlot with availability
+    const timeSlots: TimeSlot[] = allSlots.map(slotTime => {
+        // Check if in break
+        if (isInBreak(slotTime, breaks, dayOfWeek)) {
+            return { time: slotTime, available: false, reason: 'Break time' };
+        }
+
+        // Check if booked
+        if (isSlotBooked(slotTime, duration, appointments)) {
+            return { time: slotTime, available: false, reason: 'Already booked' };
+        }
+
+        return { time: slotTime, available: true };
+    });
+
+    const bookedCount = timeSlots.filter(s => !s.available).length;
+    console.log(`✅ Loaded ${timeSlots.length} slots (${bookedCount} unavailable)`);
+
+    return timeSlots;
 }
 
 /**
  * Get consolidated availability for "no preference" booking flow
- * Returns a single merged time grid where a slot is available if ANY stylist can take it
  */
 export async function fetchConsolidatedAvailability(
     serviceId: string,
     date: string,
     duration?: number
 ): Promise<ConsolidatedAvailabilityResponse> {
-    try {
-        const params = new URLSearchParams({
-            service_id: serviceId,
-            date,
-        });
-        if (duration) params.append('duration', duration.toString());
+    console.log('📅 Fetching consolidated availability...');
 
-        console.log('📅 Fetching consolidated availability...');
-        const response = await apiCall<any>(`/consolidated-availability?${params}`);
+    // Get the service
+    const { data: serviceData, error: serviceError } = await supabase
+        .from('services')
+        .select('*')
+        .eq('id', serviceId)
+        .single();
 
-        // Debug: Log the actual response structure
-        console.log('📦 Raw API response:', JSON.stringify(response, null, 2));
-
-        // Backend returns: { success, service, data: [array of slots], availableSlots, qualifiedStylistCount }
-        // Note: 'data' IS the array of slots directly (not an object with 'slots' property)
-        const slots = Array.isArray(response.data) ? response.data : [];
-        const service = response.service;
-        const totalStylists = response.qualifiedStylistCount || 0;
-        const availableCount = response.availableSlots || slots.filter((s: any) => s.available).length;
-
-        const result: ConsolidatedAvailabilityResponse = {
-            slots: slots.map((slot: any) => ({
-                time: slot.time,
-                available: slot.available === true,
-                availableStylists: slot.availableStylistCount || 0,
-                reason: slot.available ? undefined : 'No stylists available',
-            })),
-            service: service,
-            totalStylists: totalStylists,
-            availableCount: availableCount,
-        };
-
-        console.log(`✅ Loaded consolidated availability: ${result.availableCount} available slots from ${result.totalStylists} stylists`);
-
-        // Debug: Show availability breakdown
-        const availableSlots = result.slots.filter(s => s.available);
-        const unavailableSlots = result.slots.filter(s => !s.available);
-
-        console.log(`📊 AVAILABILITY BREAKDOWN:`);
-        console.log(`   ✅ Available slots (${availableSlots.length}):`, availableSlots.map(s => s.time).join(', '));
-        console.log(`   ❌ Unavailable/Booked slots (${unavailableSlots.length}):`, unavailableSlots.length > 0 ? unavailableSlots.map(s => `${s.time} (${s.reason})`).join(', ') : 'NONE - All slots showing as available!');
-
-        if (unavailableSlots.length === 0) {
-            console.warn('⚠️ WARNING: No booked slots detected! The backend may not be checking appointments correctly.');
-            console.warn('   This could be a Row Level Security (RLS) issue - backend anon key cannot see appointments table.');
-        }
-
-        return result;
-    } catch (err: any) {
-        if (err.message === 'DEMO_MODE') {
-            console.log('📅 Using DEMO consolidated availability');
-            const slots = generateDemoTimeSlots();
-            return {
-                slots: slots.map(s => ({ ...s, availableStylists: s.available ? Math.floor(Math.random() * 3) + 1 : 0 })),
-                service: DEMO_SERVICES[0],
-                totalStylists: DEMO_STYLISTS.length,
-                availableCount: slots.filter(s => s.available).length,
-            };
-        }
-        throw err;
+    if (serviceError || !serviceData) {
+        throw new Error('Service not found');
     }
+
+    const service = mapDbServiceToService(serviceData as DbService);
+    const serviceDuration = duration || service.duration;
+
+    // Get all qualified stylists
+    const stylists = await fetchStylistsForService(serviceId, date);
+
+    if (stylists.length === 0) {
+        console.log('⚠️ No qualified stylists available');
+        return {
+            slots: [],
+            service,
+            totalStylists: 0,
+            availableCount: 0,
+        };
+    }
+
+    // Get settings for slot generation
+    const settings = await getSalonSettings();
+
+    // Use the first stylist's hours or defaults
+    const startTime = stylists[0]?.workingHours?.start || settings.default_start_time;
+    const endTime = stylists[0]?.workingHours?.end || settings.default_end_time;
+
+    // Generate all possible time slots
+    const allSlotTimes = generateTimeSlots(startTime, endTime, settings.slot_interval);
+
+    // Get availability for each stylist
+    const stylistAvailabilities = await Promise.all(
+        stylists.map(async stylist => {
+            const slots = await fetchTimeSlots(stylist.id, date, serviceDuration);
+            return { stylistId: stylist.id, slots };
+        })
+    );
+
+    // Consolidate: a slot is available if ANY stylist can take it
+    const consolidatedSlots: ConsolidatedSlot[] = allSlotTimes.map(slotTime => {
+        const availableStylists = stylistAvailabilities.filter(sa =>
+            sa.slots.find(s => s.time === slotTime && s.available)
+        ).length;
+
+        return {
+            time: slotTime,
+            available: availableStylists > 0,
+            availableStylists,
+            reason: availableStylists === 0 ? 'No stylists available' : undefined,
+        };
+    });
+
+    const availableCount = consolidatedSlots.filter(s => s.available).length;
+
+    console.log(`✅ Consolidated availability: ${availableCount}/${consolidatedSlots.length} slots available`);
+    console.log(`   From ${stylists.length} qualified stylists`);
+
+    return {
+        slots: consolidatedSlots,
+        service,
+        totalStylists: stylists.length,
+        availableCount,
+    };
 }
 
 /**
- * Get ALL available stylists with their time slots 
- * Used for "no preference" booking flow (legacy - prefer fetchConsolidatedAvailability)
+ * Get ALL available stylists with their time slots
  */
 export async function fetchAllStylistsWithAvailability(
     serviceId: string,
     date: string,
     duration?: number
 ): Promise<StylistWithSlots[]> {
-    try {
-        const params = new URLSearchParams({
-            service_id: serviceId,
-            date,
-        });
-        if (duration) params.append('duration', duration.toString());
+    console.log('📅 Fetching all stylists with availability...');
 
-        console.log('📅 Fetching ALL stylists with availability...');
-        const response = await apiCall<{
-            data: Array<{
-                stylist: Stylist;
-                skills: { id: string; name: string; category: string }[];
-                slots: RawTimeSlot[];
-                availableCount: number;
-            }>;
-            service: Service;
-            totalStylists: number;
-        }>(`/available-stylists?${params}`);
+    // Get the service for duration
+    const { data: serviceData } = await supabase
+        .from('services')
+        .select('*')
+        .eq('id', serviceId)
+        .single();
 
-        // Normalize slots for each stylist to ensure proper boolean handling
-        const normalizedData: StylistWithSlots[] = (response.data || []).map(item => ({
-            stylist: item.stylist,
-            skills: item.skills,
-            slots: normalizeSlots(item.slots),
-            availableCount: item.slots.filter(s => {
-                const available = s.available ?? s.isAvailable;
-                return available === true || available === 'true' || available === 1;
-            }).length,
-        }));
+    const serviceDuration = duration || (serviceData as DbService)?.duration || 30;
 
-        console.log(`✅ Loaded ${response.totalStylists} stylists with availability`);
-        normalizedData.forEach(item => {
-            const bookedCount = item.slots.filter(s => !s.available).length;
-            console.log(`   - ${item.stylist.name}: ${item.slots.length} slots (${bookedCount} booked)`);
-        });
+    // Get all qualified stylists
+    const stylists = await fetchStylistsForService(serviceId, date);
 
-        return normalizedData;
-    } catch (err: any) {
-        if (err.message === 'DEMO_MODE') {
-            console.log('📅 Using DEMO stylists with availability');
-            return DEMO_STYLISTS.map(stylist => {
-                const slots = generateDemoTimeSlots();
-                return {
-                    stylist,
-                    skills: stylist.skills,
-                    slots,
-                    availableCount: slots.filter(s => s.available).length,
-                };
-            });
-        }
-        throw err;
-    }
+    // Get slots for each stylist
+    const stylistsWithSlots = await Promise.all(
+        stylists.map(async stylist => {
+            const slots = await fetchTimeSlots(stylist.id, date, serviceDuration);
+            return {
+                stylist,
+                skills: stylist.skills,
+                slots,
+                availableCount: slots.filter(s => s.available).length,
+            };
+        })
+    );
+
+    console.log(`✅ Loaded ${stylistsWithSlots.length} stylists with availability`);
+    stylistsWithSlots.forEach(item => {
+        const bookedCount = item.slots.filter(s => !s.available).length;
+        console.log(`   - ${item.stylist.name}: ${item.slots.length} slots (${bookedCount} booked)`);
+    });
+
+    return stylistsWithSlots;
 }
 
 /**
  * Create a new booking
+ * @param booking - The booking request data
+ * @param authClient - Optional authenticated Supabase client for protected operations
  */
-export async function createBooking(booking: BookingRequest): Promise<{
+export async function createBooking(
+    booking: BookingRequest,
+    authClient?: any
+): Promise<{
     appointmentId: string;
     date: string;
     time: string;
@@ -425,42 +552,127 @@ export async function createBooking(booking: BookingRequest): Promise<{
     service: { name: string; duration: number; price: number };
     stylist: { name: string };
 }> {
-    try {
-        console.log('📝 Creating booking...');
+    console.log('📝 Creating booking...');
 
-        const response = await apiCall<{
-            data: {
-                appointmentId: string;
-                date: string;
-                time: string;
-                status: string;
-                service: { name: string; duration: number; price: number };
-                stylist: { name: string };
-            };
-        }>('/book', {
-            method: 'POST',
-            body: JSON.stringify(booking),
-        });
+    // Use authenticated client if provided, otherwise use public client
+    const client = authClient || supabase;
 
-        console.log('✅ Booking created:', response.data.appointmentId);
+    // Get or create customer
+    let customerId: string;
 
-        return response.data;
-    } catch (err: any) {
-        if (err.message === 'DEMO_MODE') {
-            console.log('📝 DEMO booking created');
-            const service = DEMO_SERVICES.find(s => s.id === booking.appointment.service_id);
-            const stylist = DEMO_STYLISTS.find(s => s.id === booking.appointment.stylist_id);
-            return {
-                appointmentId: `DEMO-${Date.now()}`,
-                date: booking.appointment.date,
-                time: booking.appointment.time,
-                status: 'Pending',
-                service: { name: service?.name || 'Service', duration: service?.duration || 30, price: service?.price || 0 },
-                stylist: { name: stylist?.name || 'Stylist' },
-            };
+    // Check if customer exists by phone
+    const { data: existingCustomer } = await client
+        .from('customers')
+        .select('id')
+        .eq('phone', booking.customer.phone)
+        .single();
+
+    if (existingCustomer) {
+        customerId = existingCustomer.id;
+        console.log('✅ Found existing customer:', customerId);
+    } else {
+        // Create new customer
+        const { data: newCustomer, error: customerError } = await client
+            .from('customers')
+            .insert({
+                name: booking.customer.name,
+                phone: booking.customer.phone,
+                email: booking.customer.email || null,
+                gender: booking.customer.gender || null,
+            })
+            .select('id')
+            .single();
+
+        if (customerError || !newCustomer) {
+            console.error('❌ Error creating customer:', customerError);
+            throw new Error(`Failed to create customer: ${customerError?.message}`);
         }
-        throw err;
+
+        customerId = newCustomer.id;
+        console.log('✅ Created new customer:', customerId);
     }
+
+    // Get service details (can use public client)
+    const { data: serviceData, error: serviceError } = await supabase
+        .from('services')
+        .select('*')
+        .eq('id', booking.appointment.service_id)
+        .single();
+
+    if (serviceError || !serviceData) {
+        throw new Error('Service not found');
+    }
+
+    const service = serviceData as DbService;
+
+    // Get stylist details (can use public client)
+    const { data: stylistData, error: stylistError } = await supabase
+        .from('staff')
+        .select('*')
+        .eq('id', booking.appointment.stylist_id)
+        .single();
+
+    if (stylistError || !stylistData) {
+        throw new Error('Stylist not found');
+    }
+
+    const stylist = stylistData as DbStaff;
+
+    // Get branch (use stylist's branch or first active branch)
+    let branchId = stylist.branch_id;
+    if (!branchId) {
+        const { data: branchData } = await supabase
+            .from('branches')
+            .select('id')
+            .eq('is_active', true)
+            .limit(1)
+            .single();
+
+        branchId = branchData?.id;
+    }
+
+    if (!branchId) {
+        throw new Error('No active branch found');
+    }
+
+    // Create appointment (must use authenticated client)
+    const { data: appointment, error: appointmentError } = await client
+        .from('appointments')
+        .insert({
+            customer_id: customerId,
+            stylist_id: booking.appointment.stylist_id,
+            branch_id: branchId,
+            services: [booking.appointment.service_id],
+            appointment_date: booking.appointment.date,
+            start_time: booking.appointment.time,
+            duration: service.duration,
+            status: 'Pending',
+            notes: booking.appointment.notes || null,
+        })
+        .select('id')
+        .single();
+
+    if (appointmentError || !appointment) {
+        console.error('❌ Error creating appointment:', appointmentError);
+        throw new Error(`Failed to create appointment: ${appointmentError?.message}`);
+    }
+
+    console.log('✅ Booking created:', appointment.id);
+
+    return {
+        appointmentId: appointment.id,
+        date: booking.appointment.date,
+        time: booking.appointment.time,
+        status: 'Pending',
+        service: {
+            name: service.name,
+            duration: service.duration,
+            price: service.price,
+        },
+        stylist: {
+            name: stylist.name,
+        },
+    };
 }
 
 // ============================================
@@ -498,8 +710,8 @@ export function getMinDate(): string {
 }
 
 /**
- * Check if demo mode is active
+ * Check if demo mode is active (always false with direct Supabase)
  */
 export function isDemoMode(): boolean {
-    return DEMO_MODE;
+    return false;
 }

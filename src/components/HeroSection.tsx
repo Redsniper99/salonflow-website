@@ -25,10 +25,9 @@ export default function HeroSection() {
                 className="relative z-10 h-full flex items-center justify-center text-center px-4 sm:px-6"
             >
                 <div className="max-w-4xl mx-auto">
-                    <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-4 sm:mb-6 leading-tight drop-shadow-lg transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                    <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-4 sm:mb-6 leading-tight drop-shadow-lg transition-all duration-1000 lg:whitespace-nowrap ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
                         }`}>
-                        Welcome to{' '}
-                        <span className="gradient-text block mt-1 sm:mt-2">SalonFlow</span>
+                        Welcome to <span className="gradient-text">SalonFlow</span>
                     </h1>
                     <p className={`text-base sm:text-xl md:text-2xl lg:text-3xl text-white/90 mb-6 sm:mb-8 max-w-2xl mx-auto drop-shadow-md transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
                         }`}>
