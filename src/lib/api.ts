@@ -52,6 +52,12 @@ export interface ConsolidatedAvailabilityResponse {
     availableCount: number;
 }
 
+export interface StylistAvailabilityResponse {
+    slots: TimeSlot[];
+    unavailabilityReason?: string;
+    stylistName?: string;
+}
+
 export interface BookingRequest {
     customer: {
         name: string;
@@ -321,7 +327,7 @@ export async function fetchTimeSlots(
     stylistId: string,
     date: string,
     duration: number
-): Promise<TimeSlot[]> {
+): Promise<StylistAvailabilityResponse> {
     console.log('🕐 Fetching time slots:', { stylistId, date, duration });
 
     // Get salon settings
@@ -353,10 +359,14 @@ export async function fetchTimeSlots(
     // Check if stylist works on this day
     if (!stylist.working_days?.includes(dayName)) {
         console.log(`⚠️ Stylist doesn't work on ${dayName}`);
-        return [];
+        return {
+            slots: [],
+            unavailabilityReason: `${stylist.name} doesn't work on ${dayName}s`,
+            stylistName: stylist.name,
+        };
     }
 
-    // Check for unavailability
+    // Check for unavailability (holiday/day off)
     const { data: unavailData } = await supabase
         .from('stylist_unavailability')
         .select('*')
@@ -364,8 +374,14 @@ export async function fetchTimeSlots(
         .eq('unavailable_date', date);
 
     if (unavailData && unavailData.length > 0) {
-        console.log(`⚠️ Stylist is unavailable on ${date}`);
-        return [];
+        const unavailRecord = unavailData[0] as DbStylistUnavailability;
+        const reason = unavailRecord.reason || 'day off';
+        console.log(`⚠️ Stylist is unavailable on ${date}: ${reason}`);
+        return {
+            slots: [],
+            unavailabilityReason: `${stylist.name} is on ${reason} on this date`,
+            stylistName: stylist.name,
+        };
     }
 
     // Get stylist breaks
@@ -407,7 +423,10 @@ export async function fetchTimeSlots(
     const bookedCount = timeSlots.filter(s => !s.available).length;
     console.log(`✅ Loaded ${timeSlots.length} slots (${bookedCount} unavailable)`);
 
-    return timeSlots;
+    return {
+        slots: timeSlots,
+        stylistName: stylist.name,
+    };
 }
 
 /**
@@ -460,15 +479,15 @@ export async function fetchConsolidatedAvailability(
     // Get availability for each stylist
     const stylistAvailabilities = await Promise.all(
         stylists.map(async stylist => {
-            const slots = await fetchTimeSlots(stylist.id, date, serviceDuration);
-            return { stylistId: stylist.id, slots };
+            const response = await fetchTimeSlots(stylist.id, date, serviceDuration);
+            return { stylistId: stylist.id, slots: response.slots };
         })
     );
 
     // Consolidate: a slot is available if ANY stylist can take it
     const consolidatedSlots: ConsolidatedSlot[] = allSlotTimes.map(slotTime => {
         const availableStylists = stylistAvailabilities.filter(sa =>
-            sa.slots.find(s => s.time === slotTime && s.available)
+            sa.slots.find((s: TimeSlot) => s.time === slotTime && s.available)
         ).length;
 
         return {
@@ -517,19 +536,19 @@ export async function fetchAllStylistsWithAvailability(
     // Get slots for each stylist
     const stylistsWithSlots = await Promise.all(
         stylists.map(async stylist => {
-            const slots = await fetchTimeSlots(stylist.id, date, serviceDuration);
+            const response = await fetchTimeSlots(stylist.id, date, serviceDuration);
             return {
                 stylist,
                 skills: stylist.skills,
-                slots,
-                availableCount: slots.filter(s => s.available).length,
+                slots: response.slots,
+                availableCount: response.slots.filter((s: TimeSlot) => s.available).length,
             };
         })
     );
 
     console.log(`✅ Loaded ${stylistsWithSlots.length} stylists with availability`);
     stylistsWithSlots.forEach(item => {
-        const bookedCount = item.slots.filter(s => !s.available).length;
+        const bookedCount = item.slots.filter((s: TimeSlot) => !s.available).length;
         console.log(`   - ${item.stylist.name}: ${item.slots.length} slots (${bookedCount} booked)`);
     });
 

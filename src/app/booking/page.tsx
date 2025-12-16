@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Navbar from '@/components/Navbar';
+import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
 import AppointmentSection from '@/components/AppointmentSection';
 
 export default function BookingPage() {
+    const router = useRouter();
     const [isMounted, setIsMounted] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -29,7 +30,16 @@ export default function BookingPage() {
                 />
             </div>
 
-            <Navbar alwaysVisible={true} />
+            {/* Back Button */}
+            <button
+                onClick={() => router.back()}
+                className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-black/60 backdrop-blur-xl rounded-full border border-white/10 text-white hover:bg-black/80 transition-all"
+            >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span className="text-sm font-medium">Back</span>
+            </button>
 
             {/* Booking Section */}
             <div className={`transition-opacity duration-500 ${isMounted ? 'opacity-100' : 'opacity-0'}`}>

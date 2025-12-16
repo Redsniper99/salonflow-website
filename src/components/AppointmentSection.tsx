@@ -72,6 +72,7 @@ export default function AppointmentSection({ isStandalone = false }: Appointment
     const [stylists, setStylists] = useState<Stylist[]>([]);
     const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
     const [consolidatedSlots, setConsolidatedSlots] = useState<ConsolidatedSlot[]>([]);
+    const [stylistUnavailabilityMessage, setStylistUnavailabilityMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -386,6 +387,7 @@ export default function AppointmentSection({ isStandalone = false }: Appointment
         async function loadAvailability() {
             try {
                 setLoading(true);
+                setStylistUnavailabilityMessage(null);
 
                 if (isNoPreference) {
                     const data = await fetchConsolidatedAvailability(
@@ -396,13 +398,18 @@ export default function AppointmentSection({ isStandalone = false }: Appointment
                     setConsolidatedSlots(data.slots);
                     setTimeSlots([]);
                 } else if (configuring.stylist && configuring.stylist !== 'any') {
-                    const data = await fetchTimeSlots(
+                    const response = await fetchTimeSlots(
                         configuring.stylist,
                         configuring.date,
                         configuring.service!.duration
                     );
-                    setTimeSlots(data);
+                    setTimeSlots(response.slots);
                     setConsolidatedSlots([]);
+
+                    // Set unavailability message if stylist is on holiday or doesn't work this day
+                    if (response.unavailabilityReason) {
+                        setStylistUnavailabilityMessage(response.unavailabilityReason);
+                    }
                 }
 
                 setError(null);
@@ -728,6 +735,7 @@ export default function AppointmentSection({ isStandalone = false }: Appointment
                                 value={configuring.date}
                                 onChange={(e) => setConfiguring(prev => ({ ...prev, date: e.target.value, time: '' }))}
                                 min={getMinDate()}
+                                style={{ colorScheme: 'dark' }}
                                 className="w-full p-3 rounded-xl bg-white/5 border-2 border-white/10 text-white focus:border-primary-400 focus:outline-none"
                             />
                         </div>
@@ -735,6 +743,17 @@ export default function AppointmentSection({ isStandalone = false }: Appointment
                         {configuring.date && loading && (
                             <div className="text-center py-4">
                                 <div className="animate-spin w-6 h-6 border-2 border-primary-400 border-t-transparent rounded-full mx-auto"></div>
+                            </div>
+                        )}
+
+                        {/* Stylist Unavailability Notice */}
+                        {configuring.date && !loading && stylistUnavailabilityMessage && slotsToShow.length === 0 && (
+                            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-center">
+                                <div className="text-amber-400 text-2xl mb-2">📅</div>
+                                <p className="text-amber-300 font-medium">{stylistUnavailabilityMessage}</p>
+                                <p className="text-white/60 text-sm mt-2">
+                                    Please select a different date or choose another stylist.
+                                </p>
                             </div>
                         )}
 
