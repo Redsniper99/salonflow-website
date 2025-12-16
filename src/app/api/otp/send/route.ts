@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Server-side Supabase client (uses service role for admin access)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
 // Generate 6-digit OTP
 function generateOTP(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -30,6 +24,18 @@ function formatPhone(phone: string): string {
     return cleaned;
 }
 
+// Create Supabase admin client lazily (only when needed at runtime)
+function getSupabaseAdmin() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+        throw new Error('Supabase environment variables are not configured');
+    }
+
+    return createClient(supabaseUrl, supabaseServiceKey);
+}
+
 export async function POST(request: NextRequest) {
     try {
         const { phone } = await request.json();
@@ -44,6 +50,8 @@ export async function POST(request: NextRequest) {
         const formattedPhone = formatPhone(phone);
         const otp = generateOTP();
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+        const supabaseAdmin = getSupabaseAdmin();
 
         // Check for existing unexpired OTP (rate limiting)
         const { data: existingOtp } = await supabaseAdmin
