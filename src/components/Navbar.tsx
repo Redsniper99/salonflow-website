@@ -3,8 +3,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { gsap } from '@/utils/gsapConfig';
 import Image from 'next/image';
+import Link from 'next/link';
 
-export default function Navbar() {
+interface NavbarProps {
+    alwaysVisible?: boolean;
+}
+
+export default function Navbar({ alwaysVisible = false }: NavbarProps) {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isVisible, setIsVisible] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -21,6 +26,13 @@ export default function Navbar() {
     }, []);
 
     useEffect(() => {
+        // If alwaysVisible, skip scroll handling
+        if (alwaysVisible) {
+            setIsVisible(true);
+            setHideForAppointment(false);
+            return;
+        }
+
         const handleScroll = () => {
             const scrollPosition = window.scrollY;
 
@@ -62,7 +74,7 @@ export default function Navbar() {
                 clearTimeout(scrollTimeoutRef.current);
             }
         };
-    }, [isMobile]);
+    }, [isMobile, alwaysVisible]);
 
     useEffect(() => {
         if (isMobileMenuOpen) {
@@ -84,14 +96,14 @@ export default function Navbar() {
         { name: 'Contact', href: '#contact' },
     ];
 
-    // Determine visibility - hide for appointment on mobile
-    const shouldHide = (hideForAppointment && isMobile) || !isVisible;
+    // Determine visibility - hide for appointment on mobile (unless alwaysVisible)
+    const shouldHide = !alwaysVisible && ((hideForAppointment && isMobile) || !isVisible);
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
-                    ? 'bg-black/60 backdrop-blur-xl border-b border-white/10 py-3'
-                    : 'bg-transparent py-6'
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${(isScrolled || alwaysVisible)
+                ? 'bg-black/60 backdrop-blur-xl border-b border-white/10 py-3'
+                : 'bg-transparent py-6'
                 } ${shouldHide ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}
             onMouseEnter={() => !hideForAppointment && setIsVisible(true)}
         >
@@ -123,9 +135,9 @@ export default function Navbar() {
                                 {link.name}
                             </a>
                         ))}
-                        <button className="btn-primary text-sm px-6 py-2.5 shadow-lg shadow-salon-green/20">
+                        <Link href="/booking" className="btn-primary text-sm px-6 py-2.5 shadow-lg shadow-salon-green/20">
                             Book Appointment
-                        </button>
+                        </Link>
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -177,12 +189,13 @@ export default function Navbar() {
                                 </a>
                             ))}
                             <div className="pt-4 mt-2 border-t border-white/10">
-                                <button
-                                    className="btn-primary w-full py-3 text-base shadow-lg"
+                                <Link
+                                    href="/booking"
+                                    className="btn-primary w-full py-3 text-base shadow-lg block text-center"
                                     onClick={() => setIsMobileMenuOpen(false)}
                                 >
                                     Book Appointment
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     </div>

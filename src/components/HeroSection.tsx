@@ -37,7 +37,7 @@ export default function HeroSection() {
                     <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
                         }`}>
                         <a
-                            href="#appointment"
+                            href="/booking"
                             className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-primary-400 to-primary-600 text-white rounded-full uppercase tracking-wider text-sm font-semibold shadow-xl hover:shadow-[0_0_30px_rgba(116,150,116,0.5)] hover:scale-105 transition-all duration-300 text-center"
                         >
                             Book Appointment

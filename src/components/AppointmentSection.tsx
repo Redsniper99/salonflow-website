@@ -38,11 +38,11 @@ interface CustomerData {
 }
 
 const steps = [
-    { id: 1, title: 'Services', icon: '✂️', subtitle: 'Choose your treatments' },
-    { id: 2, title: 'Cart', icon: '🛒', subtitle: 'Review selections' },
+    { id: 1, title: 'Service', icon: '✂️', subtitle: 'Choose your treatment' },
+    { id: 2, title: 'Review', icon: '📋', subtitle: 'Your appointments' },
     { id: 3, title: 'Details', icon: '📝', subtitle: 'Your information' },
     { id: 4, title: 'Verify', icon: '📱', subtitle: 'OTP verification' },
-    { id: 5, title: 'Confirm', icon: '✓', subtitle: 'Review & Submit' },
+    { id: 5, title: 'Confirm', icon: '✓', subtitle: 'Submit booking' },
 ];
 
 const serviceCategories = [
@@ -53,9 +53,14 @@ const serviceCategories = [
     { id: 'Bridal', name: 'Bridal', icon: '👰' },
 ];
 
+
 const generateId = () => `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-export default function AppointmentSection() {
+interface AppointmentSectionProps {
+    isStandalone?: boolean;
+}
+
+export default function AppointmentSection({ isStandalone = false }: AppointmentSectionProps) {
     const { setSession, isAuthenticated, getAuthenticatedClient } = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
     const sectionRef = useRef<HTMLElement>(null);
@@ -222,10 +227,16 @@ export default function AppointmentSection() {
 
     const canProceed = () => {
         switch (currentStep) {
-            case 1: return cart.length > 0;
-            case 2: return cart.length > 0;
+            case 1: {
+                // Check if a service is fully configured (for service selection step)
+                return configuring.service && configuring.date && configuring.time;
+            }
+            case 2: {
+                // Review step - check if there are appointments in the list
+                return cart.length > 0;
+            }
             case 3: {
-                // Validate without showing errors (for button state)
+                // Details step - validate customer form
                 const nameErr = validateName(customer.name);
                 const phoneErr = validatePhone(customer.phone);
                 const emailErr = validateEmail(customer.email);
@@ -455,8 +466,8 @@ export default function AppointmentSection() {
         setShowModal(true);
     };
 
-    // Add configured service to cart
-    const addToCart = () => {
+    // Add configured service to appointments list
+    const addToAppointments = () => {
         if (!configuring.service || !configuring.date || !configuring.time) return;
 
         const newBooking: BookingData = {
@@ -482,6 +493,9 @@ export default function AppointmentSection() {
             date: '',
             time: '',
         });
+
+        // Always navigate to Review step after adding appointment
+        setCurrentStep(2);
     };
 
     // Remove from cart
@@ -489,7 +503,7 @@ export default function AppointmentSection() {
         setCart(prev => prev.filter(item => item.id !== id));
     };
 
-    // Handle booking submission
+    // Handle booking submission - submits each appointment separately
     const handleSubmit = async () => {
         if (cart.length === 0) return;
 
@@ -499,8 +513,9 @@ export default function AppointmentSection() {
 
             // Get authenticated Supabase client
             const authClient = getAuthenticatedClient();
-            const results: { appointmentId: string; date: string; time: string; status: string; service: { name: string; duration: number; price: number }; stylist: { name: string } }[] = [];
+            const results: { date: string; time: string; serviceName: string; price: number }[] = [];
 
+            // Submit each appointment separately
             for (const booking of cart) {
                 const isNoPreference = booking.wantsStylist === 'no' || booking.stylist === 'any';
                 const stylistId = isNoPreference ? 'NO_PREFERENCE' : booking.stylist;
@@ -518,28 +533,24 @@ export default function AppointmentSection() {
                         time: booking.time,
                         notes: customer.notes || undefined,
                     }
-                }, authClient); // Pass authenticated client
+                }, authClient);
 
-                results.push(result);
+                results.push({
+                    date: result.date,
+                    time: result.time,
+                    serviceName: booking.serviceName,
+                    price: booking.servicePrice,
+                });
             }
 
-            const message = results.map((r, i) =>
-                `${i + 1}. ${cart[i].serviceName} - ${r.date} at ${formatTime(r.time)}`
-            ).join('\n');
-
-            // Send confirmation SMS
+            // Send confirmation SMS with all appointments
             try {
                 await fetch('/api/sms/confirmation', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         phone: customer.phone,
-                        appointments: results.map((r, i) => ({
-                            serviceName: cart[i].serviceName,
-                            date: r.date,
-                            time: r.time,
-                            price: cart[i].servicePrice,
-                        })),
+                        appointments: results,
                         totalPrice,
                     }),
                 });
@@ -552,30 +563,26 @@ export default function AppointmentSection() {
             // Show success message on screen
             const successData = {
                 show: true,
-                appointments: cart.map((item, i) => ({
-                    serviceName: item.serviceName,
-                    date: results[i].date,
-                    time: results[i].time,
-                    price: item.servicePrice,
-                })),
+                appointments: results,
                 total: totalPrice,
             };
             setBookingSuccess(successData);
 
             // Reset form
             setCart([]);
-            setCustomer({ name: '', email: '', phone: '', notes: '' });
+            setConfiguring({
+                service: null,
+                wantsStylist: '',
+                stylist: '',
+                stylistName: '',
+                date: '',
+                time: '',
+            });
             setOtpSent(false);
             setOtpValue('');
             setOtpVerified(false);
+            setCurrentStep(1);
 
-            // Redirect to home after 5 seconds
-            setTimeout(() => {
-                setBookingSuccess(null);
-                setCurrentStep(1);
-                // Scroll to top of page
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 5000);
         } catch (err: any) {
             console.error('Error submitting booking:', err);
             setError(err.message || 'Failed to create appointments. Please try again.');
@@ -792,14 +799,14 @@ export default function AppointmentSection() {
                                 Back
                             </button>
                             <button
-                                onClick={addToCart}
+                                onClick={addToAppointments}
                                 disabled={!configuring.time}
                                 className={`flex-1 px-4 py-2 rounded-full font-medium transition-all ${configuring.time
                                     ? 'bg-gradient-to-r from-primary-400 to-primary-600 text-white'
                                     : 'bg-white/10 text-white/40 cursor-not-allowed'
                                     }`}
                             >
-                                Add to Cart
+                                Add Appointment
                             </button>
                         </div>
                     </div>
@@ -817,8 +824,8 @@ export default function AppointmentSection() {
                 return (
                     <div className="space-y-6">
                         <div className="text-center mb-6">
-                            <h3 className="text-2xl font-bold text-white mb-2">Choose Your Services</h3>
-                            <p className="text-white/60">Select one or more services to book</p>
+                            <h3 className="text-2xl font-bold text-white mb-2">Choose Your Service</h3>
+                            <p className="text-white/60">Select a service to book your appointment</p>
                         </div>
 
                         {/* Category Filter */}
@@ -843,45 +850,65 @@ export default function AppointmentSection() {
                                 <p className="text-white/60 mt-2">Loading services...</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[350px] overflow-y-auto pr-2">
-                                {filteredServices.map(service => {
-                                    const inCart = cart.some(c => c.service === service.id);
-                                    return (
-                                        <button
-                                            key={service.id}
-                                            onClick={() => openServiceModal(service)}
-                                            className={`p-4 rounded-xl text-left transition-all ${inCart
-                                                ? 'bg-primary-400/30 border-2 border-primary-400'
-                                                : 'bg-white/5 border-2 border-white/10 hover:border-primary-400/50'
-                                                }`}
-                                        >
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <h4 className="font-semibold text-white">{service.name}</h4>
-                                                    <p className="text-sm text-white/60">{service.duration} mins</p>
+                            <div className="max-h-[400px] overflow-y-auto themed-scrollbar rounded-xl">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-1">
+                                    {filteredServices.map(service => {
+                                        const isSelected = configuring.service?.id === service.id;
+                                        return (
+                                            <button
+                                                key={service.id}
+                                                onClick={() => openServiceModal(service)}
+                                                className={`p-4 rounded-xl text-left transition-all ${isSelected && configuring.date && configuring.time
+                                                    ? 'bg-primary-400/30 border-2 border-primary-400'
+                                                    : 'bg-white/5 border-2 border-white/10 hover:border-primary-400/50'
+                                                    }`}
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h4 className="font-semibold text-white">{service.name}</h4>
+                                                        <p className="text-sm text-white/60">{service.duration} mins</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-primary-400 font-bold">Rs {service.price}</span>
+                                                        {isSelected && configuring.date && configuring.time && (
+                                                            <span className="block text-xs text-primary-400">✓ Selected</span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <span className="text-primary-400 font-bold">Rs {service.price}</span>
-                                                    {inCart && (
-                                                        <span className="block text-xs text-primary-400">✓ In Cart</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
 
-                        {/* Cart Summary */}
-                        {cart.length > 0 && (
+                        {/* Selected Service Summary */}
+                        {configuring.service && configuring.date && configuring.time && (
                             <div className="bg-white/5 rounded-xl p-4 border border-primary-400/30">
-                                <div className="flex justify-between items-center">
+                                <div className="flex justify-between items-start">
                                     <div>
-                                        <span className="text-white font-medium">{cart.length} service(s) selected</span>
-                                        <span className="text-white/60 text-sm ml-2">({totalDuration} mins)</span>
+                                        <span className="text-xs text-primary-400 font-medium">Selected Appointment</span>
+                                        <h4 className="font-semibold text-white">{configuring.service.name}</h4>
+                                        <p className="text-sm text-white/60">
+                                            {configuring.date} at {formatTime(configuring.time)} • {configuring.stylistName || 'Any Available'}
+                                        </p>
                                     </div>
-                                    <span className="text-primary-400 font-bold text-lg">Rs {totalPrice}</span>
+                                    <div className="text-right">
+                                        <span className="text-primary-400 font-bold">Rs {configuring.service.price}</span>
+                                        <button
+                                            onClick={() => setConfiguring({
+                                                service: null,
+                                                wantsStylist: '',
+                                                stylist: '',
+                                                stylistName: '',
+                                                date: '',
+                                                time: '',
+                                            })}
+                                            className="block text-xs text-red-400 hover:text-red-300 mt-1"
+                                        >
+                                            Change
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -890,84 +917,79 @@ export default function AppointmentSection() {
                     </div>
                 );
 
-            case 2: // Cart Review
+            case 2: // Review Appointments
                 return (
                     <div className="space-y-6">
                         <div className="text-center mb-6">
-                            <h3 className="text-2xl font-bold text-white mb-2">Your Cart</h3>
-                            <p className="text-white/60">Review your selected appointments</p>
+                            <h3 className="text-2xl font-bold text-white mb-2">
+                                Your {cart.length > 1 ? 'Appointments' : 'Appointment'}
+                            </h3>
+                            <p className="text-white/60">Review your selection{cart.length > 1 ? 's' : ''} before proceeding</p>
                         </div>
 
                         {cart.length === 0 ? (
                             <div className="text-center py-8 text-white/60">
-                                <p>Your cart is empty. Go back to add services.</p>
+                                <p>No appointments selected. Go back to add services.</p>
                             </div>
                         ) : (
-                            <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                                {cart.map((item, index) => (
-                                    <div
-                                        key={item.id}
-                                        className="bg-white/5 rounded-xl p-4 border border-white/10"
-                                    >
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div>
-                                                <span className="text-xs text-primary-400 font-medium">Appointment {index + 1}</span>
-                                                <h4 className="font-semibold text-white">{item.serviceName}</h4>
-                                            </div>
-                                            <button
-                                                onClick={() => removeFromCart(item.id)}
-                                                className="text-red-400 hover:text-red-300 text-sm"
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2 text-sm">
-                                            <div>
-                                                <span className="text-white/60">Stylist:</span>
-                                                <span className="text-white ml-2">{item.stylistName}</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-white/60">Duration:</span>
-                                                <span className="text-white ml-2">{item.serviceDuration} mins</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-white/60">Date:</span>
-                                                <span className="text-white ml-2">{item.date}</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-white/60">Time:</span>
-                                                <span className="text-white ml-2">{formatTime(item.time)}</span>
+                            <div className="max-w-lg mx-auto space-y-4">
+                                {/* Appointments List */}
+                                <div className="space-y-3">
+                                    {cart.map((item, index) => (
+                                        <div
+                                            key={item.id}
+                                            className="bg-white/5 rounded-xl p-4 border border-white/10"
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <span className="text-xs text-primary-400">Appointment {index + 1}</span>
+                                                    <h4 className="font-semibold text-white">{item.serviceName}</h4>
+                                                    <p className="text-sm text-white/60">
+                                                        {item.date} at {formatTime(item.time)} • {item.stylistName}
+                                                    </p>
+                                                    <p className="text-xs text-white/40 mt-1">{item.serviceDuration} mins</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-primary-400 font-bold">Rs {item.servicePrice}</span>
+                                                    <button
+                                                        onClick={() => removeFromCart(item.id)}
+                                                        className="block text-xs text-red-400 hover:text-red-300 mt-1"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="mt-2 text-right">
-                                            <span className="text-primary-400 font-bold">Rs {item.servicePrice}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Total */}
-                        {cart.length > 0 && (
-                            <div className="bg-primary-400/20 rounded-xl p-4 border border-primary-400/50">
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <span className="text-white font-medium">Total ({cart.length} appointments)</span>
-                                        <span className="text-white/60 text-sm block">{totalDuration} mins total</span>
-                                    </div>
-                                    <span className="text-primary-400 font-bold text-2xl">Rs {totalPrice}</span>
+                                    ))}
                                 </div>
+
+                                {/* Total */}
+                                <div className="bg-primary-400/20 rounded-xl p-4 border border-primary-400/50">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <span className="text-white font-semibold">Total ({cart.length} appointment{cart.length > 1 ? 's' : ''})</span>
+                                            <span className="text-white/60 text-sm block">{totalDuration} mins</span>
+                                        </div>
+                                        <span className="text-primary-400 font-bold text-2xl">Rs {totalPrice}</span>
+                                    </div>
+                                </div>
+
+                                {/* Add Another Appointment */}
+                                <button
+                                    onClick={() => setCurrentStep(1)}
+                                    className="w-full p-4 rounded-xl border-2 border-dashed border-primary-400/50 hover:border-primary-400 bg-primary-400/5 hover:bg-primary-400/10 transition-all group"
+                                >
+                                    <div className="flex items-center justify-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-primary-400/20 flex items-center justify-center group-hover:bg-primary-400/30 transition-colors">
+                                            <svg className="w-6 h-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-primary-400 font-medium text-base">Add Another Appointment</span>
+                                    </div>
+                                </button>
                             </div>
                         )}
-
-                        <div className="text-center">
-                            <button
-                                onClick={() => setCurrentStep(1)}
-                                className="text-primary-400 hover:text-primary-300 text-sm"
-                            >
-                                + Add More Services
-                            </button>
-                        </div>
 
                         <NavButtons />
                     </div>
@@ -1226,8 +1248,10 @@ export default function AppointmentSection() {
                 return (
                     <div className="space-y-6">
                         <div className="text-center mb-6">
-                            <h3 className="text-2xl font-bold text-white mb-2">Confirm Your Bookings</h3>
-                            <p className="text-white/60">Review and submit your appointments</p>
+                            <h3 className="text-2xl font-bold text-white mb-2">
+                                Confirm Your {cart.length > 1 ? 'Appointments' : 'Appointment'}
+                            </h3>
+                            <p className="text-white/60">Review and submit your booking{cart.length > 1 ? 's' : ''}</p>
                         </div>
 
                         <div className="max-w-lg mx-auto space-y-4">
@@ -1246,22 +1270,33 @@ export default function AppointmentSection() {
                                 </div>
                             </div>
 
-                            {/* Appointments */}
-                            <div className="space-y-3 max-h-[250px] overflow-y-auto">
+                            {/* Appointments List */}
+                            <div className="space-y-3">
                                 {cart.map((item, index) => (
                                     <div
                                         key={item.id}
                                         className="bg-white/5 rounded-xl p-4 border border-white/10"
                                     >
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex justify-between items-start">
                                             <div>
-                                                <span className="text-xs text-primary-400">#{index + 1}</span>
+                                                <span className="text-xs text-primary-400">Appointment {index + 1}</span>
                                                 <h4 className="font-semibold text-white">{item.serviceName}</h4>
                                                 <p className="text-sm text-white/60">
                                                     {item.date} at {formatTime(item.time)} • {item.stylistName}
                                                 </p>
+                                                <p className="text-xs text-white/40 mt-1">{item.serviceDuration} mins</p>
                                             </div>
-                                            <span className="text-primary-400 font-bold">Rs {item.servicePrice}</span>
+                                            <div className="text-right">
+                                                <span className="text-primary-400 font-bold">Rs {item.servicePrice}</span>
+                                                {cart.length > 1 && (
+                                                    <button
+                                                        onClick={() => removeFromCart(item.id)}
+                                                        className="block text-xs text-red-400 hover:text-red-300 mt-1"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -1270,10 +1305,30 @@ export default function AppointmentSection() {
                             {/* Total */}
                             <div className="bg-primary-400/20 rounded-xl p-4 border border-primary-400/50">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-white font-semibold">Total</span>
+                                    <div>
+                                        <span className="text-white font-semibold">Total ({cart.length} appointment{cart.length > 1 ? 's' : ''})</span>
+                                        <span className="text-white/60 text-sm block">{totalDuration} mins</span>
+                                    </div>
                                     <span className="text-primary-400 font-bold text-2xl">Rs {totalPrice}</span>
                                 </div>
                             </div>
+
+                            {/* Add Another Appointment */}
+                            <div className="text-center">
+                                <button
+                                    onClick={() => setCurrentStep(1)}
+                                    className="text-primary-400 hover:text-primary-300 text-sm font-medium"
+                                >
+                                    + Add Another Appointment
+                                </button>
+                            </div>
+
+                            {customer.notes && (
+                                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                                    <h4 className="text-white font-medium mb-2">Notes</h4>
+                                    <p className="text-white/60 text-sm">{customer.notes}</p>
+                                </div>
+                            )}
                         </div>
 
                         {error && (
@@ -1294,7 +1349,7 @@ export default function AppointmentSection() {
                             </button>
                             <button
                                 onClick={handleSubmit}
-                                disabled={loading}
+                                disabled={loading || cart.length === 0}
                                 className="flex items-center gap-2 px-8 py-3 rounded-full font-medium bg-gradient-to-r from-primary-400 to-primary-600 text-white shadow-[0_0_20px_rgba(116,150,116,0.4)] hover:scale-105 transition-all disabled:opacity-50"
                             >
                                 {loading ? (
@@ -1325,7 +1380,7 @@ export default function AppointmentSection() {
             <section
                 ref={sectionRef}
                 id="appointment"
-                className="h-screen w-full bg-gradient-to-br from-primary-950 via-[#0a1a0a] to-primary-950 relative z-10 overflow-hidden"
+                className={`h-[100dvh] w-full bg-gradient-to-br from-primary-950 via-[#0a1a0a] to-primary-950 relative z-10 overflow-hidden ${isStandalone ? 'pt-20' : ''}`}
             >
                 {/* Desktop Layout */}
                 <div className={`h-full flex ${isMobile ? 'hidden' : ''}`}>
@@ -1374,8 +1429,8 @@ export default function AppointmentSection() {
                     </div>
 
                     {/* Main Content */}
-                    <div className="flex-1 p-8 overflow-y-auto flex items-center justify-center">
-                        <div className="w-full max-w-3xl">
+                    <div className="flex-1 p-8 overflow-y-auto themed-scrollbar">
+                        <div className="w-full max-w-4xl mx-auto pb-8">
                             {renderStepContent()}
                         </div>
                     </div>
@@ -1407,9 +1462,11 @@ export default function AppointmentSection() {
                         </div>
                     </div>
 
-                    {/* Mobile Content */}
-                    <div className="flex-1 overflow-y-auto p-4">
-                        {renderStepContent()}
+                    {/* Mobile Content - No scrolling, use Next button to navigate */}
+                    <div className="flex-1 overflow-hidden p-4 flex flex-col">
+                        <div className="flex-1 overflow-y-auto themed-scrollbar">
+                            {renderStepContent()}
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1444,9 +1501,9 @@ export default function AppointmentSection() {
                         </div>
 
                         <h2 className="text-2xl font-bold text-white mb-2">🎉 Booking Confirmed!</h2>
-                        <p className="text-white/60 mb-6">Your appointments have been successfully booked.</p>
+                        <p className="text-white/60 mb-6">Your appointment has been successfully booked.</p>
 
-                        {/* Appointments List */}
+                        {/* Appointment Details */}
                         <div className="bg-white/5 rounded-xl p-4 mb-6 text-left space-y-3">
                             {bookingSuccess.appointments.map((apt, i) => (
                                 <div key={i} className="flex justify-between items-center border-b border-white/10 pb-2 last:border-0 last:pb-0">
@@ -1461,19 +1518,29 @@ export default function AppointmentSection() {
                             ))}
                         </div>
 
-                        {/* Total */}
-                        <div className="flex justify-between items-center mb-6 px-4 py-3 bg-primary-400/20 rounded-xl">
-                            <span className="text-white font-semibold">Total</span>
-                            <span className="text-primary-400 font-bold text-xl">Rs {bookingSuccess.total.toLocaleString()}</span>
-                        </div>
-
                         {/* Confirmation Message */}
-                        <p className="text-white/50 text-sm">
+                        <p className="text-white/50 text-sm mb-6">
                             📱 Confirmation SMS has been sent to your phone.
                         </p>
-                        <p className="text-white/40 text-xs mt-2">
-                            Redirecting to home in a few seconds...
-                        </p>
+
+                        {/* Action Buttons */}
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => {
+                                    setBookingSuccess(null);
+                                    setCurrentStep(1);
+                                }}
+                                className="w-full px-6 py-3 rounded-full font-medium bg-gradient-to-r from-primary-400 to-primary-600 text-white shadow-[0_0_20px_rgba(116,150,116,0.4)] hover:scale-105 transition-all"
+                            >
+                                + Book Another Appointment
+                            </button>
+                            <a
+                                href="/"
+                                className="block text-white/60 hover:text-white text-sm transition-colors"
+                            >
+                                Done — Go to Home
+                            </a>
+                        </div>
                     </div>
                 </div>
             )}

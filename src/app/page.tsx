@@ -11,7 +11,7 @@ import Footer from '@/components/Footer';
 import VideoScroller from '@/components/VideoScroller';
 import HorizontalScrollSection from "@/components/HorizontalScrollSection";
 import ScissorCutDivider from '@/components/ScissorCutDivider';
-import AppointmentSection from '@/components/AppointmentSection';
+import BookingCTA from '@/components/BookingCTA';
 import Preloader from '@/components/Preloader';
 
 export default function Home() {
@@ -69,8 +69,8 @@ export default function Home() {
 
         <ScissorCutDivider direction="right" />
 
-        {/* Modern Appointment Booking */}
-        <AppointmentSection />
+        {/* Booking Call to Action */}
+        <BookingCTA />
 
         <ScissorCutDivider direction="left" />
 
