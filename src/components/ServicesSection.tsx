@@ -1,129 +1,133 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { gsap } from '@/utils/gsapConfig';
-import { themeContent } from '@/themes';
+import { useEffect, useRef } from 'react';
+import { gsap, ScrollTrigger } from '@/utils/gsapConfig';
 
-const { services } = themeContent;
+const services = [
+    {
+        icon: '✂️',
+        title: 'Hair Styling',
+        description: 'Professional cuts, colors, and styling for all hair types',
+    },
+    {
+        icon: '💅',
+        title: 'Nail Care',
+        description: 'Manicures, pedicures, and nail art by expert technicians',
+    },
+    {
+        icon: '💆',
+        title: 'Spa Treatments',
+        description: 'Relaxing facials, massages, and body treatments',
+    },
+    {
+        icon: '💄',
+        title: 'Makeup',
+        description: 'Bridal, party, and everyday makeup services',
+    },
+    {
+        icon: '👰',
+        title: 'Bridal Packages',
+        description: 'Complete bridal beauty packages for your special day',
+    },
+    {
+        icon: '🧖',
+        title: 'Skin Care',
+        description: 'Advanced skincare treatments and consultations',
+    },
+];
 
 export default function ServicesSection() {
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const [hovered, setHovered] = useState<number | null>(null);
+    const sectionRef = useRef<HTMLElement>(null);
+    const titleRef = useRef<HTMLDivElement>(null);
+    const cardsRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!sectionRef.current) return;
-      const ctx = gsap.context(() => {
-        gsap.fromTo(
-          '.service-row',
-          { opacity: 0, y: 16 },
-          {
-            opacity: 1, y: 0, stagger: 0.08, duration: 0.6, ease: 'power2.out',
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: 'top 75%',
-              toggleActions: 'play none none none',
-            },
-          }
-        );
-      }, sectionRef);
-      return () => ctx.revert();
-    }, 200);
-    return () => clearTimeout(timer);
-  }, []);
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (!sectionRef.current || !titleRef.current || !cardsRef.current) return;
 
-  return (
-    <section
-      ref={sectionRef}
-      id="services"
-      className="py-14 lg:py-20 bg-[var(--t-bg)] relative z-10"
-    >
-      <div className="max-w-screen-xl mx-auto px-6 lg:px-12">
+            const ctx = gsap.context(() => {
+                // Title animation
+                gsap.fromTo(titleRef.current,
+                    { opacity: 0, y: 50 },
+                    {
+                        opacity: 1,
+                        y: 0,
+                        duration: 1,
+                        ease: 'power3.out',
+                        scrollTrigger: {
+                            trigger: sectionRef.current,
+                            start: 'top 80%',
+                            toggleActions: 'play none none none',
+                        },
+                    }
+                );
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 lg:mb-12 gap-6">
-          <div>
-            <p className="t-script text-[var(--t-accent-2)] mb-4" style={{ fontSize: '1.2rem' }}>
-              {services.label}
-            </p>
-            <h2
-              className="t-display font-light text-[var(--t-text)]"
-              style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)' }}
-            >
-              {services.heading}
-            </h2>
-          </div>
-          <p className="text-[var(--t-text-2)] text-sm max-w-xs leading-relaxed">
-            {services.subtext}
-          </p>
-        </div>
+                // Cards stagger animation - using fromTo for visibility
+                const cards = cardsRef.current?.querySelectorAll('.service-card');
+                if (cards && cards.length > 0) {
+                    gsap.fromTo(cards,
+                        { opacity: 0, y: 60 },
+                        {
+                            opacity: 1,
+                            y: 0,
+                            stagger: 0.15,
+                            duration: 0.8,
+                            ease: 'power3.out',
+                            scrollTrigger: {
+                                trigger: cardsRef.current,
+                                start: 'top 85%',
+                                toggleActions: 'play none none none',
+                            },
+                        }
+                    );
+                }
+            }, sectionRef);
 
-        {/* Accordion list */}
-        <div className="border-t border-[var(--t-border)]">
-          {services.items.map((service, i) => (
-            <div
-              key={i}
-              className="service-row border-b border-[var(--t-border)] cursor-pointer"
-              style={{ opacity: 1 }}
-              onMouseEnter={() => setHovered(i)}
-              onMouseLeave={() => setHovered(null)}
-            >
-              <div
-                className={`flex items-center justify-between py-5 lg:py-6 transition-all duration-200 ${
-                  hovered === i ? 'pl-4 lg:pl-6' : 'pl-0'
-                }`}
-              >
-                {/* Number + Title */}
-                <div className="flex items-center gap-5 lg:gap-10">
-                  <span className="t-label text-[var(--t-text-3)] w-7 shrink-0">
-                    {service.number}
-                  </span>
-                  <h3
-                    className={`t-display font-light transition-colors duration-200 ${
-                      hovered === i ? 'text-[var(--t-accent-2)]' : 'text-[var(--t-text)]'
-                    }`}
-                    style={{ fontSize: 'clamp(1rem, 1.8vw, 1.5rem)' }}
-                  >
-                    {service.title}
-                  </h3>
+            return () => ctx.revert();
+        }, 200);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    return (
+        <section
+            ref={sectionRef}
+            id="services"
+            className="py-20 px-4 relative z-10"
+        >
+            <div className="container mx-auto max-w-7xl">
+                <div ref={titleRef} className="text-center mb-16">
+                    <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 gradient-text drop-shadow-sm">
+                        Our Services
+                    </h2>
+                    <p className="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto drop-shadow-md">
+                        Discover our wide range of premium beauty and wellness services
+                    </p>
                 </div>
 
-                {/* Description + Arrow */}
-                <div className="flex items-center gap-8">
-                  <p
-                    className={`text-[var(--t-text-2)] text-sm leading-relaxed max-w-[240px] transition-all duration-200 hidden lg:block ${
-                      hovered === i ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  >
-                    {service.description}
-                  </p>
-                  <span
-                    className={`text-sm transition-all duration-200 ${
-                      hovered === i ? 'text-[var(--t-accent-2)] translate-x-1' : 'text-[var(--t-text-3)]'
-                    }`}
-                  >
-                    →
-                  </span>
+                <div ref={cardsRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    {services.map((service, index) => (
+                        <div
+                            key={index}
+                            className="service-card p-8 rounded-2xl border-2 border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-primary-400/50 transition-all duration-300 cursor-pointer group"
+                            style={{ opacity: 1 }}
+                        >
+                            <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300 drop-shadow-md">
+                                {service.icon}
+                            </div>
+                            <h3 className="text-2xl font-bold mb-3 text-white drop-shadow-md">
+                                {service.title}
+                            </h3>
+                            <p className="text-white/80 leading-relaxed font-medium">
+                                {service.description}
+                            </p>
+                            <button className="mt-6 text-salon-accent font-bold hover:text-white transition-colors duration-300 uppercase tracking-wider text-sm">
+                                Learn More →
+                            </button>
+                        </div>
+                    ))}
                 </div>
-              </div>
-
-              {/* Mobile description */}
-              {hovered === i && (
-                <p className="lg:hidden text-[var(--t-text-2)] text-sm leading-relaxed pb-4 pl-12">
-                  {service.description}
-                </p>
-              )}
             </div>
-          ))}
-        </div>
-
-        {/* Book CTA */}
-        <div className="mt-8 lg:mt-12">
-          <a href="/booking" className="t-btn t-btn-accent">
-            Book a Service
-          </a>
-        </div>
-      </div>
-    </section>
-  );
+        </section>
+    );
 }
