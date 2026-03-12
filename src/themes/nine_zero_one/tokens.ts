@@ -27,8 +27,8 @@ export const tokens = {
     '--t-radius':    '0px',
 
     // ── Typography ──
-    '--t-font-display': 'var(--font-cormorant), Georgia, "Times New Roman", serif',
-    '--t-font-body':    'var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif',
+    '--t-font-display': 'var(--font-display), Georgia, "Times New Roman", serif',
+    '--t-font-body':    'var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif',
   },
   name: 'nine_zero_one' as const,
 }

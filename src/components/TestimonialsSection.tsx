@@ -6,7 +6,7 @@ import { themeContent } from '@/themes';
 const { testimonials } = themeContent;
 
 export default function TestimonialsSection() {
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
   const [activeIdx, setActiveIdx] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [animKey,   setAnimKey]   = useState(0);
@@ -35,12 +35,12 @@ export default function TestimonialsSection() {
     <section
       ref={sectionRef}
       id="testimonials"
-      className="py-20 lg:py-32 bg-[var(--t-bg)] relative z-10"
+      className="py-14 lg:py-20 bg-[var(--t-bg)] relative z-10"
     >
       <div className="max-w-screen-xl mx-auto px-6 lg:px-12">
 
         {/* Label */}
-        <p className="t-label text-[var(--t-accent-2)] mb-12 lg:mb-16 tracking-[0.4em]">
+        <p className="t-script text-[var(--t-accent-2)] mb-8 lg:mb-10" style={{ fontSize: '1.2rem' }}>
           {testimonials.label}
         </p>
 
@@ -50,13 +50,13 @@ export default function TestimonialsSection() {
           <blockquote
             key={animKey}
             className="t-display font-light italic text-[var(--t-text)] leading-[1.15] max-w-4xl mb-12 lg:mb-16 animate-fade-in"
-            style={{ fontSize: 'clamp(1.4rem, 3vw, 2.6rem)', minHeight: '7rem' }}
+            style={{ fontSize: 'clamp(1.1rem, 2.2vw, 2rem)', minHeight: '5rem' }}
           >
             &ldquo;{active.quote}&rdquo;
           </blockquote>
 
           {/* Author + indicator */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <p className="text-[var(--t-text)] text-sm font-medium tracking-wide">
                 {active.name}

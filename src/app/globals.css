@@ -1,5 +1,32 @@
 @import "tailwindcss";
 
+/* ============================================================
+   THEME CSS VARIABLES — Nine Zero One inspired, light cream
+   Update these when switching themes (matches tokens.ts)
+   ============================================================ */
+:root {
+  --t-bg:           #fffefc;
+  --t-bg-2:         #f5f0e8;
+  --t-bg-3:         #ffffff;
+  --t-bg-dark:      #111111;
+
+  --t-text:         #111111;
+  --t-text-2:       #555555;
+  --t-text-3:       #999999;
+
+  --t-accent:       #fffb00;
+  --t-accent-2:     #CD9B77;
+
+  --t-border:       rgba(0, 0, 0, 0.08);
+  --t-border-2:     rgba(0, 0, 0, 0.20);
+
+  --t-radius:       0px;
+
+  --t-font-display: Georgia, "Times New Roman", serif;
+  --t-font-body:    "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --t-font-script:  cursive;
+}
+
 @variant dark (&:where(.dark, .dark *));
 
 @theme inline {
@@ -15,8 +42,8 @@
   --color-primary-900: #3d280d;
   --color-primary-950: #1e1408;
 
-  --font-display: var(--font-cormorant), Georgia, serif;
-  --font-sans:    var(--font-inter), "Helvetica Neue", sans-serif;
+  --font-display: Georgia, serif;
+  --font-sans:    "Helvetica Neue", sans-serif;
 }
 
 /* ============================================================
@@ -30,7 +57,11 @@ html, body {
 body {
   background-color: var(--t-bg, #fffefc);
   color: var(--t-text, #111111);
-  font-family: var(--t-font-body, "Helvetica Neue", Helvetica, Arial, sans-serif);
+  /* Override font vars now that Next.js font CSS vars are available on body */
+  --t-font-display: var(--font-bodoni), Georgia, "Times New Roman", serif;
+  --t-font-body:    var(--font-raleway), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --t-font-script:  var(--font-vibes), cursive;
+  font-family: var(--t-font-body);
 }
 
 /* ============================================================
@@ -56,6 +87,7 @@ body {
 /* Display serif font */
 .t-display { font-family: var(--t-font-display); }
 .t-body    { font-family: var(--t-font-body); }
+.t-script  { font-family: var(--t-font-script); }
 
 /* ============================================================
    LABEL — small uppercase tracking (ninezeroonesalon.com style)
@@ -95,9 +127,9 @@ body {
   border-color: var(--t-accent);
 }
 .t-btn-accent:hover {
-  background-color: transparent;
-  color: var(--t-text);
-  border-color: var(--t-text);
+  background-color: #f0e800;
+  color: #111111;
+  border-color: #f0e800;
 }
 
 /* Dark filled — on light backgrounds */

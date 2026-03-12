@@ -8,8 +8,8 @@ import { themeContent } from '@/themes';
 const { gallery } = themeContent;
 
 export default function GallerySection() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const titleRef   = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const titleRef   = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -33,14 +33,14 @@ export default function GallerySection() {
     <section
       ref={sectionRef}
       id="gallery"
-      className="py-20 lg:py-32 bg-[var(--t-bg-2)] relative z-10"
+      className="py-14 lg:py-20 bg-[var(--t-bg-2)] relative z-10"
     >
       {/* Header */}
-      <div ref={titleRef} className="max-w-screen-xl mx-auto px-6 lg:px-12 mb-10 lg:mb-14">
-        <p className="t-label text-[var(--t-accent-2)] mb-4 tracking-[0.4em]">{gallery.label}</p>
+      <div ref={titleRef} className="max-w-screen-xl mx-auto px-6 lg:px-12 mb-8 lg:mb-10">
+        <p className="t-script text-[var(--t-accent-2)] mb-4" style={{ fontSize: '1.2rem' }}>{gallery.label}</p>
         <h2
           className="t-display font-light text-[var(--t-text)]"
-          style={{ fontSize: 'clamp(2.2rem, 5vw, 4rem)' }}
+          style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)' }}
         >
           {gallery.heading}
         </h2>

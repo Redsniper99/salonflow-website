@@ -7,7 +7,7 @@ import { themeContent } from '@/themes';
 const { services } = themeContent;
 
 export default function ServicesSection() {
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
 
   useEffect(() => {
@@ -36,19 +36,19 @@ export default function ServicesSection() {
     <section
       ref={sectionRef}
       id="services"
-      className="py-20 lg:py-32 bg-[var(--t-bg)] relative z-10"
+      className="py-14 lg:py-20 bg-[var(--t-bg)] relative z-10"
     >
       <div className="max-w-screen-xl mx-auto px-6 lg:px-12">
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 lg:mb-16 gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 lg:mb-12 gap-6">
           <div>
-            <p className="t-label text-[var(--t-accent-2)] mb-5 tracking-[0.4em]">
+            <p className="t-script text-[var(--t-accent-2)] mb-4" style={{ fontSize: '1.2rem' }}>
               {services.label}
             </p>
             <h2
               className="t-display font-light text-[var(--t-text)]"
-              style={{ fontSize: 'clamp(2.2rem, 5vw, 4rem)' }}
+              style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)' }}
             >
               {services.heading}
             </h2>
@@ -82,7 +82,7 @@ export default function ServicesSection() {
                     className={`t-display font-light transition-colors duration-200 ${
                       hovered === i ? 'text-[var(--t-accent-2)]' : 'text-[var(--t-text)]'
                     }`}
-                    style={{ fontSize: 'clamp(1.2rem, 2.2vw, 1.9rem)' }}
+                    style={{ fontSize: 'clamp(1rem, 1.8vw, 1.5rem)' }}
                   >
                     {service.title}
                   </h3>
@@ -118,7 +118,7 @@ export default function ServicesSection() {
         </div>
 
         {/* Book CTA */}
-        <div className="mt-12 lg:mt-16">
+        <div className="mt-8 lg:mt-12">
           <a href="/booking" className="t-btn t-btn-accent">
             Book a Service
           </a>

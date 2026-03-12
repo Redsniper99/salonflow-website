@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { themeContent } from '@/themes';
+import logoFooter from '@/assets/logo-pack/final one-08.png';
 
 const { salonName, tagline, footer } = themeContent;
 
@@ -19,14 +21,17 @@ export default function Footer() {
       </div>
 
       {/* Main content */}
-      <div className="max-w-screen-xl mx-auto px-6 lg:px-12 py-12 lg:py-16">
+      <div className="max-w-screen-xl mx-auto px-6 lg:px-12 py-10 lg:py-12">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
 
           {/* Brand */}
           <div className="col-span-2 lg:col-span-1">
-            <h3 className="t-display text-xl font-light tracking-[0.3em] uppercase text-white mb-4">
-              {salonName}
-            </h3>
+            <Image
+              src={logoFooter}
+              alt={salonName}
+              height={52}
+              className="w-auto mb-4"
+            />
             <p className="text-white/40 text-sm leading-relaxed max-w-[200px]">
               {footer.tagline}
             </p>

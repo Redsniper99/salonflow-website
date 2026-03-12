@@ -8,7 +8,7 @@ import { themeContent } from '@/themes';
 const { cta } = themeContent;
 
 export default function BookingCTA() {
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -29,7 +29,7 @@ export default function BookingCTA() {
     <section
       ref={sectionRef}
       id="book"
-      className="relative py-24 lg:py-40 overflow-hidden z-10"
+      className="relative py-16 lg:py-24 overflow-hidden z-10"
       style={{ background: 'linear-gradient(135deg, #f5f0e8 0%, #fffefc 50%, #f5ebe0 100%)' }}
     >
       {/* Decorative large background text */}
@@ -50,16 +50,16 @@ export default function BookingCTA() {
       </div>
 
       <div className="cta-content relative z-10 max-w-screen-xl mx-auto px-6 lg:px-12 text-center">
-        <p className="t-label text-[var(--t-accent-2)] mb-6 tracking-[0.45em]">
+        <p className="t-script text-[var(--t-accent-2)] mb-5" style={{ fontSize: '1.2rem' }}>
           {cta.label}
         </p>
         <h2
           className="t-display font-light text-[var(--t-text)] mb-8 max-w-3xl mx-auto leading-[1.1]"
-          style={{ fontSize: 'clamp(2.2rem, 5vw, 4.5rem)' }}
+          style={{ fontSize: 'clamp(1.8rem, 3.5vw, 3rem)' }}
         >
           {cta.heading}
         </h2>
-        <p className="text-[var(--t-text-2)] text-sm max-w-md mx-auto mb-12 leading-relaxed">
+        <p className="text-[var(--t-text-2)] text-sm max-w-md mx-auto mb-8 leading-relaxed">
           {cta.subtext}
         </p>
         <Link href="/booking" className="t-btn t-btn-accent">

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { themeContent } from '@/themes';
+import logoSquare from '@/assets/logo-pack/logo-square.png';
 
 interface PreloaderProps {
   onComplete: () => void;
@@ -34,9 +36,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
   if (!isMounted) {
     return (
       <div className="fixed inset-0 z-[9999] bg-[var(--t-bg)] flex items-center justify-center">
-        <h1 className="t-display text-4xl font-light tracking-[0.4em] uppercase text-[var(--t-text)]">
-          {themeContent.salonName}
-        </h1>
+        <Image src={logoSquare} alt={themeContent.salonName} width={160} height={160} className="w-auto" priority />
       </div>
     );
   }
@@ -53,16 +53,15 @@ export default function Preloader({ onComplete }: PreloaderProps) {
       <span className="absolute bottom-6 left-6 w-5 h-5 border-b border-l border-[var(--t-border-2)]" />
       <span className="absolute bottom-6 right-6 w-5 h-5 border-b border-r border-[var(--t-border-2)]" />
 
-      <div className="flex flex-col items-center gap-10 w-full max-w-[300px] px-8">
-        {/* Salon name */}
-        <div className="text-center">
-          <h1 className="t-display text-4xl sm:text-5xl font-light tracking-[0.35em] uppercase text-[var(--t-text)]">
-            {themeContent.salonName}
-          </h1>
-          <p className="t-label text-[var(--t-text-3)] mt-3 tracking-[0.4em]">
-            {themeContent.tagline}
-          </p>
-        </div>
+      <div className="flex flex-col items-center gap-10 w-full max-w-[280px] px-8">
+        {/* Logo */}
+        <Image
+          src={logoSquare}
+          alt={themeContent.salonName}
+          width={160} height={160}
+          className="w-auto"
+          priority
+        />
 
         {/* Yellow progress bar */}
         <div className="w-full">

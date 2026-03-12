@@ -37,8 +37,8 @@ export const content = {
       { id: 4, alt: 'Makeup Session',  src: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?q=80&w=1971&auto=format&fit=crop',  wide: false },
       { id: 5, alt: 'Spa Treatment',   src: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?q=80&w=2070&auto=format&fit=crop',  wide: false },
       { id: 6, alt: 'Hair Colour',     src: 'https://images.unsplash.com/photo-1560869713-7d0a29430803?q=80&w=2026&auto=format&fit=crop',  wide: true  },
-      { id: 7, alt: 'Salon Interior',  src: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1974&auto=format&fit=crop',  wide: false },
-      { id: 8, alt: 'Skin Care',       src: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=2070&auto=format&fit=crop',  wide: false },
+      { id: 7, alt: 'Salon Interior',  src: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1974&auto=format&fit=crop',  wide: true  },
+      { id: 8, alt: 'Skin Care',       src: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=2070&auto=format&fit=crop',  wide: true  },
     ],
   },
 

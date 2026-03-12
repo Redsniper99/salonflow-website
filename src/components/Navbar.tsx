@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { themeContent } from '@/themes';
+import logoLongLight from '@/assets/logo-pack/logo-long-light.png';
 
 interface NavbarProps {
   alwaysVisible?: boolean;
@@ -60,13 +62,14 @@ export default function Navbar({ alwaysVisible = false }: NavbarProps) {
           }`}>
 
             {/* Logo */}
-            <a
-              href="#home"
-              className={`t-display text-lg font-light tracking-[0.3em] uppercase transition-colors duration-300 ${
-                onHero ? 'text-white hover:text-[var(--t-accent)]' : 'text-[var(--t-text)] hover:text-[var(--t-accent-2)]'
-              }`}
-            >
-              {themeContent.salonName}
+            <a href="#home" className="flex-shrink-0">
+              <Image
+                src={logoLongLight}
+                alt={themeContent.salonName}
+                height={isScrolled || alwaysVisible ? 38 : 44}
+                className="w-auto transition-all duration-300"
+                priority
+              />
             </a>
 
             {/* Desktop nav links */}
@@ -88,16 +91,6 @@ export default function Navbar({ alwaysVisible = false }: NavbarProps) {
 
             {/* Right: Appointments + Book Now */}
             <div className="hidden lg:flex items-center gap-3">
-              <Link
-                href="/booking"
-                className={`t-label transition-colors duration-200 ${
-                  onHero
-                    ? 'text-white/80 hover:text-white'
-                    : 'text-[var(--t-text-2)] hover:text-[var(--t-text)]'
-                }`}
-              >
-                Appointments
-              </Link>
               <Link href="/booking" className="t-btn t-btn-accent">
                 Book Now
               </Link>

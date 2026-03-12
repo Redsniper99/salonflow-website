@@ -1,28 +1,39 @@
 import type { Metadata } from "next";
-import { Inter, Cormorant_Garamond } from "next/font/google";
+import { Raleway, Bodoni_Moda, Great_Vibes } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
-import ThemeProvider from "@/components/ThemeProvider";
 import SmoothScroller from "@/components/SmoothScroller";
 import { themeContent } from "@/themes";
 
-const inter = Inter({
-  variable: "--font-inter",
+const raleway = Raleway({
+  variable: "--font-raleway",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
   display: "swap",
 });
 
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
+const bodoniModa = Bodoni_Moda({
+  variable: "--font-bodoni",
   subsets: ["latin"],
-  weight: ["300", "400", "600", "700"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
+  display: "swap",
+});
+
+const greatVibes = Great_Vibes({
+  variable: "--font-vibes",
+  subsets: ["latin"],
+  weight: ["400"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: `${themeContent.salonName} — ${themeContent.tagline}`,
   description: themeContent.hero.subtext,
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
@@ -32,11 +43,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
-      <head>
-        <ThemeProvider />
-      </head>
       <body
-        className={`${inter.variable} ${cormorant.variable} antialiased`}
+        className={`${raleway.variable} ${bodoniModa.variable} ${greatVibes.variable} antialiased font-sans`}
         suppressHydrationWarning
       >
         <SmoothScroller />

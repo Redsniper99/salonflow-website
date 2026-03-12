@@ -6,7 +6,7 @@ import { themeContent } from '@/themes';
 const { contact } = themeContent;
 
 export default function MapContactSection() {
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
 
@@ -35,16 +35,16 @@ export default function MapContactSection() {
     <section
       ref={sectionRef}
       id="contact"
-      className="py-20 lg:py-32 bg-[var(--t-bg-2)] relative z-10"
+      className="py-14 lg:py-20 bg-[var(--t-bg-2)] relative z-10"
     >
       <div className="max-w-screen-xl mx-auto px-6 lg:px-12">
 
         {/* Header */}
-        <div className={`mb-12 lg:mb-16 transition-all duration-800 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <p className="t-label text-[var(--t-accent-2)] mb-4 tracking-[0.4em]">{contact.label}</p>
+        <div className={`mb-8 lg:mb-12 transition-all duration-800 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+          <p className="t-script text-[var(--t-accent-2)] mb-4" style={{ fontSize: '1.2rem' }}>{contact.label}</p>
           <h2
             className="t-display font-light text-[var(--t-text)]"
-            style={{ fontSize: 'clamp(2.2rem, 5vw, 4rem)' }}
+            style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)' }}
           >
             {contact.heading}
           </h2>

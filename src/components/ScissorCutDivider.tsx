@@ -9,7 +9,7 @@ interface ScissorCutDividerProps {
 export default function ScissorCutDivider({ direction = 'right' }: ScissorCutDividerProps) {
   const [isVisible,    setIsVisible]    = useState(false);
   const [hasAnimated,  setHasAnimated]  = useState(false);
-  const dividerRef = useRef<HTMLDivElement>(null);
+  const dividerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
