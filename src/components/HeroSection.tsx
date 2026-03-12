@@ -1,100 +1,76 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { themeContent } from '@/themes';
-
-const { hero } = themeContent;
+import { useEffect, useRef, useState } from 'react';
 
 export default function HeroSection() {
-  const [isVisible, setIsVisible] = useState(false);
+    const contentRef = useRef<HTMLDivElement>(null);
+    const sectionRef = useRef<HTMLElement>(null);
+    const [isVisible, setIsVisible] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 120);
-    return () => clearTimeout(timer);
-  }, []);
+    useEffect(() => {
+        // Trigger animations after mount
+        const timer = setTimeout(() => setIsVisible(true), 100);
+        return () => clearTimeout(timer);
+    }, []);
 
-  return (
-    <section
-      id="home"
-      className="relative w-full overflow-hidden flex items-end"
-      style={{ height: 'min(90vh, 800px)', minHeight: '540px' }}
-    >
-      {/* Dark gradient over video — hero always has dark bg for text legibility */}
-      <div className="absolute inset-0 bg-black/45 z-[1]" />
-      <div
-        className="absolute inset-0 z-[1]"
-        style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0) 100%)' }}
-      />
-      <div
-        className="absolute inset-0 z-[1]"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%)' }}
-      />
-
-      {/* ── CONTENT ── */}
-      <div className="relative z-10 w-full max-w-screen-xl mx-auto px-6 lg:px-12 pb-14 lg:pb-20">
-        <div
-          className={`max-w-xl transition-all duration-1000 ease-out ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          }`}
+    return (
+        <section
+            ref={sectionRef}
+            id="home"
+            className="relative w-full h-screen overflow-hidden"
         >
-          {/* Label */}
-          <p className="t-script text-[var(--t-accent)] mb-3" style={{ fontSize: '1.1rem' }}>
-            {hero.label}
-          </p>
+            {/* Hero Content */}
+            <div
+                ref={contentRef}
+                className="relative z-10 h-full flex items-center justify-center text-center px-4 sm:px-6"
+            >
+                <div className="max-w-4xl mx-auto">
+                    <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-4 sm:mb-6 leading-tight drop-shadow-lg transition-all duration-1000 lg:whitespace-nowrap ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                        }`}>
+                        Welcome to <span className="gradient-text">SalonFlow</span>
+                    </h1>
+                    <p className={`text-base sm:text-xl md:text-2xl lg:text-3xl text-white/90 mb-6 sm:mb-8 max-w-2xl mx-auto drop-shadow-md transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                        }`}>
+                        Where beauty meets elegance. Experience luxury salon services
+                        tailored just for you.
+                    </p>
+                    <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                        }`}>
+                        <a
+                            href="/booking"
+                            className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-primary-400 to-primary-600 text-white rounded-full uppercase tracking-wider text-sm font-semibold shadow-xl hover:shadow-[0_0_30px_rgba(116,150,116,0.5)] hover:scale-105 transition-all duration-300 text-center"
+                        >
+                            Book Appointment
+                        </a>
+                        <a
+                            href="#services"
+                            className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 border-2 border-white/80 text-white hover:bg-white hover:text-primary-700 backdrop-blur-sm transition-all duration-300 rounded-full uppercase tracking-wider text-sm font-semibold text-center"
+                        >
+                            View Services
+                        </a>
+                    </div>
+                </div>
+            </div>
 
-          {/* Heading */}
-          <h1
-            className="t-display font-light leading-[1.0] text-white mb-6"
-            style={{ fontSize: 'clamp(2.2rem, 5.5vw, 4.5rem)' }}
-          >
-            {hero.heading[0]}
-            <br />
-            <em className="t-script font-normal" style={{ fontSize: 'clamp(2.6rem, 6.5vw, 5.2rem)' }}>
-              {hero.heading[1]}
-            </em>
-          </h1>
-
-          {/* Sub */}
-          <p
-            className={`text-white/70 text-sm max-w-sm leading-relaxed mb-8 transition-all duration-1000 delay-300 ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-          >
-            {hero.subtext}
-          </p>
-
-          {/* CTAs */}
-          <div
-            className={`flex flex-wrap gap-3 transition-all duration-1000 delay-500 ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-          >
-            <a href="/booking" className="t-btn t-btn-accent">
-              {hero.ctaPrimary}
-            </a>
-            <a href="#services" className="t-btn t-btn-outline-white">
-              {hero.ctaSecondary}
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Scroll indicator */}
-      <div
-        className={`absolute bottom-6 right-8 lg:right-12 z-10 flex flex-col items-center gap-2 transition-all duration-1000 delay-700 ${
-          isVisible ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        <span
-          className="t-label text-white/40 text-[0.52rem] tracking-[0.3em]"
-          style={{ writingMode: 'vertical-rl' }}
-        >
-          Scroll
-        </span>
-        <div className="w-px h-10 bg-white/20 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-2/5 bg-[var(--t-accent)] animate-scroll-line" />
-        </div>
-      </div>
-    </section>
-  );
+            {/* Scroll Indicator */}
+            <div className="absolute bottom-6 sm:bottom-8 left-1/2 transform -translate-x-1/2 z-10">
+                <div className={`animate-bounce transition-opacity duration-1000 delay-700 ${isVisible ? 'opacity-100' : 'opacity-0'
+                    }`}>
+                    <svg
+                        className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-md"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                        />
+                    </svg>
+                </div>
+            </div>
+        </section>
+    );
 }
