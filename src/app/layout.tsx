@@ -1,27 +1,40 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Raleway, Bodoni_Moda, Great_Vibes } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
+import SmoothScroller from "@/components/SmoothScroller";
+import { themeContent } from "@/themes";
 
-const inter = Inter({
-  variable: "--font-inter",
+const raleway = Raleway({
+  variable: "--font-raleway",
   subsets: ["latin"],
-  display: 'swap',
+  weight: ["300", "400", "500", "600"],
+  display: "swap",
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-display",
+const bodoniModa = Bodoni_Moda({
+  variable: "--font-bodoni",
   subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
-  display: 'swap',
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const greatVibes = Great_Vibes({
+  variable: "--font-vibes",
+  subsets: ["latin"],
+  weight: ["400"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "SalonFlow - Luxury Salon Services",
-  description: "Experience luxury salon services where beauty meets elegance. Professional hair styling, nail care, spa treatments, and more.",
+  title: `${themeContent.salonName} — ${themeContent.tagline}`,
+  description: themeContent.hero.subtext,
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
 };
-
-import SmoothScroller from "@/components/SmoothScroller";
 
 export default function RootLayout({
   children,
@@ -30,11 +43,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
-      <body className={`${inter.variable} ${playfair.variable} antialiased`} suppressHydrationWarning>
+      <body
+        className={`${raleway.variable} ${bodoniModa.variable} ${greatVibes.variable} antialiased font-sans`}
+        suppressHydrationWarning
+      >
         <SmoothScroller />
-        <Providers>
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

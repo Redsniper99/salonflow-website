@@ -9,72 +9,53 @@ import TestimonialsSection from '@/components/TestimonialsSection';
 import MapContactSection from '@/components/MapContactSection';
 import Footer from '@/components/Footer';
 import VideoScroller from '@/components/VideoScroller';
-import HorizontalScrollSection from "@/components/HorizontalScrollSection";
 import ScissorCutDivider from '@/components/ScissorCutDivider';
 import BookingCTA from '@/components/BookingCTA';
 import Preloader from '@/components/Preloader';
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading]     = useState(true);
   const [showContent, setShowContent] = useState(false);
 
-  // Delayed content visibility to ensure smooth transition
   useEffect(() => {
     if (!isLoading) {
-      // Small delay to ensure video/content is ready
-      const timer = setTimeout(() => {
-        setShowContent(true);
-      }, 100);
+      const timer = setTimeout(() => setShowContent(true), 100);
       return () => clearTimeout(timer);
     }
   }, [isLoading]);
 
   return (
     <>
-      {/* Preloader - always mounted but fades out */}
       {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
 
-      {/* Background layer to prevent white flash */}
-      <div className="fixed inset-0 bg-primary-950 -z-20" />
+      {/* Background prevents flash */}
+      <div className="fixed inset-0 bg-[var(--t-bg)] -z-20" />
 
-      {/* Main Content */}
       <main
-        className={`relative min-h-screen transition-opacity duration-700 ease-out ${showContent ? 'opacity-100' : 'opacity-0'
-          }`}
+        className={`relative min-h-screen transition-opacity duration-700 ease-out ${
+          showContent ? 'opacity-100' : 'opacity-0'
+        }`}
         style={{ visibility: isLoading ? 'hidden' : 'visible' }}
       >
-        {/* Full-page scroll-controlled video background */}
+        {/* Scroll-controlled video background (hero only) */}
         <VideoScroller />
 
         <Navbar />
         <HeroSection />
 
-        {/* Scissor cut transition */}
         <ScissorCutDivider direction="right" />
-
-        <HorizontalScrollSection />
-
-        {/* Scissor cut transition */}
-        <ScissorCutDivider direction="left" />
-
         <ServicesSection />
 
-        <ScissorCutDivider direction="right" />
-
+        <ScissorCutDivider direction="left" />
         <GallerySection />
 
-        <ScissorCutDivider direction="left" />
-
+        <ScissorCutDivider direction="right" />
         <TestimonialsSection />
 
-        <ScissorCutDivider direction="right" />
-
-        {/* Booking Call to Action */}
+        <ScissorCutDivider direction="left" />
         <BookingCTA />
 
-        <ScissorCutDivider direction="left" />
-
-        {/* Map & Contact Section */}
+        <ScissorCutDivider direction="right" />
         <MapContactSection />
 
         <Footer />
